@@ -1,0 +1,2510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#05061a">
+<title>Resume Studio</title>
+<script>
+/* Avoids a flash of the login card when the page is reloaded while still signed in (this tab's session). */
+try { if (sessionStorage.getItem('resumeStudio.session') === '1') document.documentElement.classList.add('has-session'); } catch (e) { /* storage blocked */ }
+</script>
+
+<!-- Fonts: Syne (display) + Manrope (interface) + Source Serif 4 (the "Classic" resume template). Falls back to system fonts offline. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* =====================================================================
+   1. TOKENS & RESET
+   ===================================================================== */
+:root{
+  --bg0:#04051a; --bg1:#0a0b2b; --bg2:#15103d;
+  --ink:#eef0ff; --muted:#aab1d8; --dim:#8a92bd;
+  --line:rgba(255,255,255,.13); --line-2:rgba(255,255,255,.24);
+  --glass:rgba(255,255,255,.055); --glass-2:rgba(255,255,255,.09);
+  --violet:#8b5cff; --cyan:#22e1ff; --pink:#ff4fd8;
+  --ok:#3dffb0; --err:#ff6b87; --warn:#ffcf5c;
+  --grad:linear-gradient(120deg,#8b5cff 0%,#4f7cff 45%,#22e1ff 100%);
+  --radius:18px; --radius-sm:12px;
+  --ff-display:'Syne','Segoe UI',system-ui,sans-serif;
+  --ff-body:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html.has-session #loginScreen{display:none}
+html{color-scheme:dark;-webkit-text-size-adjust:100%;scrollbar-color:#3b3f78 transparent}
+body{
+  margin:0;min-height:100vh;color:var(--ink);font-family:var(--ff-body);font-size:16px;line-height:1.5;
+  background:
+    radial-gradient(1100px 760px at 12% -8%,rgba(92,60,220,.34),transparent 62%),
+    radial-gradient(900px 700px at 105% 8%,rgba(20,120,190,.28),transparent 58%),
+    radial-gradient(800px 600px at 50% 120%,rgba(200,60,200,.16),transparent 60%),
+    linear-gradient(160deg,var(--bg0),var(--bg1) 55%,var(--bg2));
+  background-attachment:fixed;overflow-x:hidden;
+}
+h1,h2,h3,h4,p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+img{max-width:100%}
+.i{width:1.15em;height:1.15em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.2em}
+.sr-only{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+::selection{background:rgba(139,92,255,.55)}
+.skip-link{position:absolute;left:12px;top:-60px;z-index:100;padding:10px 16px;border-radius:10px;background:#fff;color:#07082a;font-weight:700;text-decoration:none;transition:top .2s}
+.skip-link:focus{top:12px}
+
+#bg3d{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
+#app{position:relative;z-index:1;min-height:100vh}
+
+/* =====================================================================
+   2. BUTTONS, FIELDS, CARDS
+   ===================================================================== */
+.btn{
+  position:relative;overflow:hidden;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;gap:.55em;
+  min-height:42px;padding:0 18px;border:1px solid var(--line);border-radius:12px;background:var(--glass-2);color:var(--ink);
+  font-weight:700;font-size:.92rem;line-height:1.15;cursor:pointer;text-decoration:none;white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .2s ease,box-shadow .25s ease,border-color .25s ease,background .25s ease;
+}
+.btn:hover{transform:translateY(-1px);border-color:rgba(34,225,255,.65);box-shadow:0 0 0 1px rgba(34,225,255,.25),0 10px 30px -8px rgba(34,225,255,.5)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;border-color:var(--line)}
+.btn-primary{background:var(--grad);border-color:transparent;color:#07082a}
+.btn-primary:hover{border-color:transparent;box-shadow:0 0 0 1px rgba(255,255,255,.25),0 12px 38px -8px rgba(139,92,255,.85),0 0 30px rgba(34,225,255,.4)}
+.btn-danger:hover{border-color:var(--err);box-shadow:0 0 0 1px rgba(255,107,135,.3),0 10px 30px -8px rgba(255,107,135,.55)}
+.btn-danger-solid{background:linear-gradient(120deg,#ff4f78,#ff8a5c);border-color:transparent;color:#1c0610}
+.btn-sm{min-height:38px;padding:0 13px;font-size:.84rem;border-radius:10px}
+.btn-icon{width:38px;min-width:38px;padding:0;border-radius:10px}
+.btn-block{width:100%}
+.ripple{position:absolute;z-index:-1;border-radius:50%;background:rgba(255,255,255,.4);transform:scale(0);opacity:.9;pointer-events:none;animation:ripple .65s ease-out forwards}
+@keyframes ripple{to{transform:scale(1);opacity:0}}
+
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.field>label,.lbl{font-size:.74rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.inp{
+  width:100%;min-height:44px;padding:11px 14px;color:var(--ink);background:rgba(6,8,30,.62);border:1px solid var(--line);border-radius:12px;
+  font-weight:500;font-size:.95rem;line-height:1.4;transition:border-color .2s,box-shadow .2s,background .2s;
+}
+.inp::placeholder{color:#7d85b0;opacity:1}
+.inp:hover{border-color:var(--line-2)}
+.inp:focus{outline:2px solid var(--cyan);outline-offset:1px;border-color:transparent;box-shadow:0 0 24px rgba(34,225,255,.28)}
+.inp[aria-invalid="true"]{border-color:var(--err);box-shadow:0 0 0 3px rgba(255,107,135,.18)}
+.inp:disabled{opacity:.5;cursor:not-allowed}
+textarea.inp{resize:vertical;min-height:98px}
+select.inp{appearance:none;-webkit-appearance:none;padding-right:40px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23aab1d8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center}
+select.inp option{background:#12143a;color:var(--ink)}
+.msg{min-height:1.2em;font-size:.8rem;font-weight:600;color:var(--err)}
+.msg.ok{color:var(--ok)}
+.hint{font-size:.8rem;color:var(--dim)}
+.check{display:flex;align-items:center;gap:9px;font-size:.86rem;color:var(--muted);cursor:pointer;width:max-content;max-width:100%}
+.check input{width:18px;height:18px;accent-color:var(--violet);cursor:pointer}
+
+.card{
+  background:var(--glass);border:1px solid var(--line);border-radius:var(--radius);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);
+  box-shadow:0 24px 60px -28px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.08);
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .card,.topbar,.login-card{background:rgba(18,20,56,.92)}
+}
+/* Lite profile (set by script only when WebGL is software-rendered, i.e. no GPU):
+   live backdrop blur is very slow without a GPU, so use firmer glass fills instead. */
+.lite .card,.lite .topbar,.lite .login-card,.lite .toast,.lite .busy,.lite .lightbox,.lite .modal{-webkit-backdrop-filter:none;backdrop-filter:none}
+.lite .card{background:rgba(22,24,64,.78)}
+.lite .topbar{background:rgba(9,10,34,.92)}
+.lite .login-card{background:linear-gradient(160deg,rgba(40,42,100,.8),rgba(18,20,56,.88));transition:none;box-shadow:0 18px 40px -18px rgba(0,0,0,.7)}
+.lite .login-card.has-error{box-shadow:0 18px 40px -18px rgba(0,0,0,.7),0 0 0 1px rgba(255,107,135,.7)}
+.lite .busy{background:rgba(5,6,26,.9)}
+.lite .lightbox{background:rgba(3,4,18,.97)}
+.lite .modal{background:rgba(3,4,18,.84)}
+.sub{color:var(--muted);font-size:.98rem;margin-top:6px}
+
+/* =====================================================================
+   3. LOGIN SCREEN
+   ===================================================================== */
+.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:28px 16px;perspective:1100px}
+.login-card{
+  position:relative;width:min(420px,100%);padding:38px 32px 30px;border-radius:28px;transform-style:preserve-3d;will-change:transform;
+  background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.035));border:1px solid var(--line);
+  -webkit-backdrop-filter:blur(22px) saturate(150%);backdrop-filter:blur(22px) saturate(150%);
+  box-shadow:0 34px 90px -24px rgba(0,0,0,.8),0 0 90px -14px rgba(139,92,255,.4);
+  transition:box-shadow .3s ease;
+}
+/* Glowing border ring: the wrapper is a static mask that leaves only a 1.5px edge,
+   and the gradient inside it turns with a plain transform animation, so the spin
+   runs on the compositor instead of repainting every frame on the main thread. */
+.ring{position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;overflow:hidden;pointer-events:none;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.ring i{position:absolute;left:50%;top:50%;width:900px;height:900px;margin:-450px 0 0 -450px;will-change:transform;
+  background:conic-gradient(transparent 0 55%,rgba(34,225,255,.95),rgba(139,92,255,.95),transparent 92%);
+  animation:ring-turn 7s linear infinite}
+@keyframes ring-turn{to{transform:rotate(360deg)}}
+.lite .ring i{animation:none;transform:rotate(200deg)}
+.login-card::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(420px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.16),transparent 45%);opacity:var(--glare,0);transition:opacity .3s;
+}
+.login-card.has-error{box-shadow:0 34px 90px -24px rgba(0,0,0,.8),0 0 0 1px rgba(255,107,135,.7),0 0 60px -6px rgba(255,107,135,.55)}
+.lift{transform:translateZ(34px)}
+.brand-lg{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.brand-lg .logo{width:46px;height:46px;filter:drop-shadow(0 0 14px rgba(139,92,255,.8))}
+.brand-lg span{font:800 1.45rem var(--ff-display);letter-spacing:.01em}
+.login h1{font:800 clamp(1.7rem,6vw,2.1rem)/1.1 var(--ff-display)}
+.login form{display:grid;gap:16px;margin-top:24px}
+.pw-wrap{position:relative}
+.pw-wrap .inp{padding-right:52px}
+.pw-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:10px;background:transparent;color:var(--muted);cursor:pointer;transition:color .2s,background .2s}
+.pw-toggle:hover{color:var(--cyan);background:rgba(255,255,255,.07)}
+.login-error{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:12px;background:rgba(255,107,135,.12);border:1px solid rgba(255,107,135,.5);color:#ffc2cd;font-size:.9rem;font-weight:600}
+.login-foot{margin-top:20px;font-size:.78rem;color:var(--dim);text-align:center}
+
+/* =====================================================================
+   4. DASHBOARD SHELL, TOP BAR, SLIDING TABS
+   ===================================================================== */
+.topbar{
+  position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px clamp(14px,3vw,32px);
+  background:rgba(7,8,30,.58);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:10px;font:800 1.15rem var(--ff-display);white-space:nowrap}
+.brand .logo{width:34px;height:34px;filter:drop-shadow(0 0 10px rgba(139,92,255,.7))}
+.tabs{position:relative;display:flex;gap:4px;margin:0 auto;padding:4px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.tab{position:relative;z-index:1;min-height:40px;padding:0 20px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-weight:700;font-size:.92rem;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:color .25s;white-space:nowrap}
+.tab:hover{color:#fff}
+.tab[aria-selected="true"]{color:#fff}
+.tab-ind{position:absolute;z-index:0;left:0;top:4px;bottom:4px;width:0;border-radius:10px;background:linear-gradient(120deg,rgba(139,92,255,.6),rgba(34,225,255,.38));box-shadow:0 0 24px rgba(139,92,255,.5),inset 0 0 0 1px rgba(255,255,255,.22);pointer-events:none}
+.top-right{display:flex;align-items:center;gap:12px}
+.save-status{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:600;color:var(--muted);white-space:nowrap}
+.save-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);transition:background .3s,box-shadow .3s}
+.save-status.is-saving .save-dot{background:var(--warn);box-shadow:0 0 10px var(--warn)}
+.save-status.is-error .save-dot{background:var(--err);box-shadow:0 0 10px var(--err)}
+.shell{width:min(1480px,100%);margin:0 auto;padding:26px clamp(14px,3vw,32px) 90px;outline:none}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.page-title{font:800 clamp(1.7rem,3.2vw,2.3rem)/1.1 var(--ff-display);background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;width:max-content;max-width:100%}
+
+/* =====================================================================
+   5. RESUME BUILDER (form side)
+   ===================================================================== */
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;margin-bottom:20px}
+.toolbar .spacer{flex:1 1 20px}
+.toolbar .sep{width:1px;align-self:stretch;background:var(--line);margin:2px 4px}
+.pane-switch{display:none;margin-bottom:16px;padding:4px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.pane-switch button{flex:1;min-height:42px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-weight:700;cursor:pointer;transition:background .25s,color .25s}
+.pane-switch button[aria-pressed="true"]{color:#fff;background:linear-gradient(120deg,rgba(139,92,255,.6),rgba(34,225,255,.38));box-shadow:0 0 20px rgba(139,92,255,.4)}
+.builder{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:24px;align-items:start}
+.form-col{display:flex;flex-direction:column;gap:18px;min-width:0;container-type:inline-size}
+.sec-head{display:flex;align-items:center;gap:14px;padding:16px 18px}
+.sec-no{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:11px;background:var(--grad);color:#07082a;font:800 .95rem var(--ff-display)}
+.sec-head h2{font:800 1.12rem/1.2 var(--ff-display);flex:1}
+.sec-toggle{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--line);border-radius:10px;background:var(--glass);color:var(--muted);cursor:pointer;transition:transform .3s,color .2s,border-color .2s}
+.sec-toggle:hover{color:var(--cyan);border-color:rgba(34,225,255,.6)}
+.sec-toggle[aria-expanded="false"] .i{transform:rotate(180deg)}
+.sec-toggle .i{transition:transform .3s}
+.sec-body{padding:2px 18px 20px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.grid2 .full{grid-column:1/-1}
+@container (max-width:520px){.grid2{grid-template-columns:1fr}}
+.counter{align-self:flex-end;font-size:.75rem;color:var(--dim)}
+.list{display:flex;flex-direction:column;gap:12px}
+.list:empty{display:none}
+.empty{padding:16px;border:1px dashed var(--line-2);border-radius:14px;color:var(--muted);font-size:.9rem;text-align:center}
+.add-row{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.entry{padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);will-change:transform}
+.entry-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.entry-title{font-weight:800;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.entry-ctl{display:flex;gap:6px;flex:none}
+.skill-add{display:flex;gap:10px}
+.skill-add .inp{flex:1;min-width:0}
+.skill-row{display:grid;grid-template-columns:minmax(80px,170px) minmax(0,1fr) auto;gap:10px 16px;align-items:center;padding:10px 12px}
+.tag{display:inline-flex;align-items:center;max-width:100%;padding:6px 13px;border-radius:99px;background:linear-gradient(120deg,rgba(139,92,255,.38),rgba(34,225,255,.2));border:1px solid rgba(139,92,255,.55);font-weight:700;font-size:.86rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;justify-self:start}
+.range-wrap{display:flex;align-items:center;gap:12px;min-width:0}
+.range-wrap .range{flex:1;min-width:0}
+.skill-val{width:46px;flex:none;text-align:right;font-weight:800;font-variant-numeric:tabular-nums;color:var(--cyan)}
+input[type=range].range{-webkit-appearance:none;appearance:none;width:100%;height:26px;background:transparent;cursor:pointer;--p:50%;margin:0}
+.range::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--cyan)) 0 / var(--p) 100% no-repeat,rgba(255,255,255,.15)}
+.range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-6px;border-radius:50%;background:#fff;border:3px solid var(--violet);box-shadow:0 0 14px rgba(139,92,255,.95)}
+.range::-moz-range-track{height:8px;border-radius:99px;background:rgba(255,255,255,.15)}
+.range::-moz-range-progress{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--cyan))}
+.range::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--violet);box-shadow:0 0 14px rgba(139,92,255,.95)}
+.range:focus-visible{outline:2px solid var(--cyan);outline-offset:4px;border-radius:8px}
+
+/* =====================================================================
+   6. LIVE PREVIEW PANEL
+   ===================================================================== */
+.preview-col{position:sticky;top:88px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.pv-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pv-head h2{font:800 1.12rem var(--ff-display);display:flex;align-items:center;gap:10px}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px var(--ok);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}
+.seg{display:inline-flex;padding:3px;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.seg button{min-height:34px;padding:0 13px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-weight:700;font-size:.82rem;cursor:pointer;transition:background .25s,color .25s}
+.seg button[aria-pressed="true"]{color:#fff;background:rgba(139,92,255,.55);box-shadow:0 0 16px rgba(139,92,255,.4)}
+.pv-controls{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;justify-content:space-between}
+.themes{display:grid;grid-template-columns:repeat(3,minmax(0,110px));gap:10px}
+.theme-btn{display:flex;flex-direction:column;gap:7px;padding:7px;border-radius:14px;background:var(--glass);border:1px solid var(--line);color:var(--ink);cursor:pointer;text-align:left;font-weight:700;font-size:.78rem;transition:border-color .25s,box-shadow .25s,transform .2s}
+.theme-btn:hover{transform:translateY(-2px);border-color:rgba(34,225,255,.55)}
+.theme-btn[aria-pressed="true"]{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 0 26px rgba(34,225,255,.32)}
+.theme-thumb{display:block;height:56px;border-radius:8px;background-color:#fff;background-repeat:no-repeat}
+.th-aurora{background-image:linear-gradient(120deg,#0d0f33,#6d3df0),linear-gradient(#d7daf0,#d7daf0),linear-gradient(#d7daf0,#d7daf0);background-position:50% 8%,50% 66%,28% 86%;background-size:84% 38%,76% 5px,52% 5px}
+.th-classic{background-image:linear-gradient(#222,#222),linear-gradient(#aaa,#aaa),linear-gradient(#ddd,#ddd),linear-gradient(#ddd,#ddd);background-position:50% 14%,50% 34%,50% 62%,32% 84%;background-size:46% 6px,74% 2px,76% 5px,54% 5px}
+.th-studio{background-image:linear-gradient(#6d3df0,#d6246e),linear-gradient(#222,#222),linear-gradient(#d7daf0,#d7daf0),linear-gradient(#d7daf0,#d7daf0);background-position:7% 16%,36% 22%,64% 64%,52% 86%;background-size:5px 36%,52% 8px,66% 5px,48% 5px}
+.accents{display:flex;gap:10px;align-items:center;padding-top:4px;flex-wrap:wrap}
+.swatch{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:var(--c);cursor:pointer;transition:transform .2s,box-shadow .2s}
+.swatch:hover{transform:scale(1.12);box-shadow:0 0 18px var(--c)}
+.swatch[aria-pressed="true"]{outline:2px solid #fff;outline-offset:3px}
+.paper-viewport{overflow:auto;border-radius:14px;background:rgba(0,0,0,.22);border:1px solid var(--line);padding:14px;max-height:calc(100vh - 290px);min-height:320px}
+.paper-sizer{position:relative;margin:0 auto}
+
+/* =====================================================================
+   7. RESUME DOCUMENT (shared by preview + print) — 3 templates
+   ===================================================================== */
+.rs-paper{position:absolute;left:0;top:0;width:794px;min-height:1123px;padding:11mm 0;transform-origin:0 0;background:#fff;color:#222845;font-size:13.5px;line-height:1.5;box-shadow:0 24px 70px rgba(0,0,0,.55);overflow-wrap:anywhere;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.rs-paper *{box-sizing:border-box}
+.rs-paper h1,.rs-paper h2,.rs-paper p,.rs-paper ul{margin:0;padding:0}
+.rs-paper a{color:inherit;text-decoration:none}
+.rs-paper .ph{opacity:.42;font-style:italic}
+.rs-contact{list-style:none;display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12px}
+.rs-body{display:block}
+.rs-sec{margin-top:15px}
+.rs-item{margin-bottom:9px;break-inside:avoid;page-break-inside:avoid}
+.rs-row{display:flex;justify-content:space-between;align-items:baseline;gap:14px}
+.rs-role{font-weight:700}
+.rs-dates{font-size:12px;color:#6a7094;white-space:nowrap;flex:none}
+.rs-org{font-weight:600;font-size:13px}
+.rs-item ul{margin:6px 0 0 18px;padding:0}
+.rs-item li{margin:2px 0}
+.rs-desc{margin-top:3px}
+.rs-skills{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:7px 28px}
+.rs-skill{break-inside:avoid}
+.rs-skill-name{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:600;margin-bottom:3px}
+.rs-skill-name em{font-style:normal;color:#6a7094;font-weight:500}
+.bar{display:block;height:6px;border-radius:99px;background:#e5e7f5;overflow:hidden}
+.bar b{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--ra),#22b8ff);transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.rs-chips{list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+.rs-chips li{padding:3px 11px;border-radius:99px;background:#f0edff;background:color-mix(in srgb,var(--ra) 11%,#fff);border:1px solid #d9d6f5;border:1px solid color-mix(in srgb,var(--ra) 30%,#fff);font-size:12.5px;font-weight:600}
+.rs-chips li em{font-style:normal;font-weight:500;color:#6a7094}
+.rs-cert{margin-bottom:4px}
+
+/* ---- Template 1 · Aurora (modern, gradient header) ---- */
+.t-aurora{font-family:var(--ff-body)}
+.t-aurora .rs-head{margin:0 30px;padding:24px 34px 18px;border-radius:16px;background:linear-gradient(125deg,#0d0f33 0%,#1d1658 55%,var(--ra) 190%);color:#fff}
+.t-aurora .rs-name{font:800 31px/1.1 var(--ff-display)}
+.t-aurora .rs-title{margin:4px 0 11px;font-size:15px;font-weight:600;color:#d3d8ff}
+.t-aurora .rs-contact{color:#e6e9ff}
+.t-aurora .rs-body{padding:2px 44px 4px}
+.t-aurora .rs-sec h2{display:flex;align-items:center;gap:12px;margin-bottom:10px;font:800 12.5px var(--ff-display);letter-spacing:.15em;text-transform:uppercase;color:var(--ra)}
+.t-aurora .rs-sec h2::after{content:'';flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--ra),transparent)}
+.t-aurora .rs-org{color:var(--ra)}
+
+/* ---- Template 2 · Classic (serif, ruled) ---- */
+.t-classic{font-family:'Source Serif 4',Georgia,'Times New Roman',serif;color:#1c1c1c}
+.t-classic .rs-head{margin:0 52px;padding-bottom:14px;text-align:center;border-bottom:1.5px solid #1c1c1c}
+.t-classic .rs-name{font-size:32px;font-weight:700;letter-spacing:.02em;line-height:1.15}
+.t-classic .rs-title{margin:4px 0 10px;font-size:15px;font-style:italic;color:#444}
+.t-classic .rs-contact{justify-content:center;color:#333}
+.t-classic .rs-body{padding:2px 52px 4px}
+.t-classic .rs-sec h2{margin-bottom:9px;padding-bottom:4px;border-bottom:1px solid #bdbdbd;font-size:12.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ra)}
+.t-classic .rs-dates{color:#555;font-style:italic}
+.t-classic .rs-org{font-weight:600;font-style:italic;color:#333}
+.t-classic .rs-skills{display:flex;flex-wrap:wrap;gap:4px 8px}
+.t-classic .rs-skill{display:inline}
+.t-classic .rs-skill-name{display:inline;font-weight:600;font-size:13px}
+.t-classic .rs-skill-name em,.t-classic .bar{display:none}
+.t-classic .rs-skill:not(:last-child) .rs-skill-name::after{content:' \00b7';color:#888;margin-left:6px}
+.t-classic .rs-chips li{border-radius:4px;background:#f4f4f4;border-color:#d8d8d8}
+
+/* ---- Template 3 · Studio (bold, accent bar) ---- */
+.t-studio{font-family:var(--ff-body);color:#1a1d3a}
+.t-studio .rs-head{position:relative;margin:0 44px;padding:6px 0 12px 26px}
+.t-studio .rs-head::before{content:'';position:absolute;left:0;top:4px;bottom:12px;width:8px;border-radius:8px;background:linear-gradient(var(--ra),#ff5ca8)}
+.t-studio .rs-name{font:800 42px/1 var(--ff-display);letter-spacing:-.01em;text-transform:uppercase;color:#12142e}
+.t-studio .rs-title{margin:8px 0 10px;font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--ra)}
+.t-studio .rs-contact{color:#3b406b}
+.t-studio .rs-body{padding:0 44px 4px}
+.t-studio .rs-sec h2{margin-bottom:10px;padding-left:10px;border-left:4px solid var(--ra);font:800 14px var(--ff-display);letter-spacing:.1em;text-transform:uppercase;color:#12142e}
+.t-studio .rs-exp .rs-item{position:relative;padding-left:18px;border-left:2px solid #e3e5f6}
+.t-studio .rs-exp .rs-item::before{content:'';position:absolute;left:-6px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--ra)}
+.t-studio .rs-org{color:var(--ra)}
+.t-studio .bar{height:8px}
+
+/* =====================================================================
+   8. UPLOAD-A-PICTURE TAB
+   ===================================================================== */
+.upload-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:start}
+.dropzone{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:380px;padding:40px 24px;text-align:center;cursor:pointer;
+  border:2px dashed rgba(139,92,255,.6);border-radius:24px;background:radial-gradient(520px 280px at 50% 0%,rgba(139,92,255,.2),transparent 70%),var(--glass);
+  transition:border-color .25s,background .25s,transform .25s,box-shadow .25s;
+}
+.dropzone:hover,.dropzone.is-over{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(34,225,255,.35),0 0 50px -6px rgba(34,225,255,.4)}
+.dropzone.is-over{transform:scale(1.012);background:radial-gradient(520px 280px at 50% 0%,rgba(34,225,255,.24),transparent 70%),var(--glass-2)}
+.dz-icon{width:78px;height:78px;display:grid;place-items:center;border-radius:24px;background:var(--grad);color:#07082a;box-shadow:0 0 40px rgba(139,92,255,.6)}
+.dz-icon .i{width:34px;height:34px}
+.dropzone h2{font:800 1.4rem var(--ff-display)}
+.dropzone p{color:var(--muted);max-width:36ch}
+.dz-types{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.dz-types span{padding:3px 11px;border-radius:99px;border:1px solid var(--line-2);font-size:.76rem;font-weight:800;letter-spacing:.06em;color:var(--muted)}
+.busy{position:absolute;inset:0;z-index:5;display:grid;place-items:center;align-content:center;gap:14px;border-radius:inherit;background:rgba(5,6,26,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-weight:700}
+.spinner{width:44px;height:44px;border-radius:50%;border:4px solid rgba(255,255,255,.15);border-top-color:var(--cyan);animation:rot .8s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.viewer-card{position:relative;padding:14px;display:flex;flex-direction:column;gap:12px;transition:outline-color .2s,box-shadow .2s}
+.viewer-card.is-over{outline:2px dashed var(--cyan);outline-offset:3px;box-shadow:0 0 50px -6px rgba(34,225,255,.45)}
+.viewer-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.viewer-bar .spacer{flex:1}
+.zoom-label{min-width:52px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums;color:var(--cyan)}
+.stage{height:min(72vh,760px);min-height:300px;overflow:auto;display:flex;border-radius:14px;border:1px solid var(--line);background:#0a0b26;cursor:grab;touch-action:pan-x pan-y}
+.stage.is-drag{cursor:grabbing;user-select:none}
+.stage img{display:block;margin:auto;max-width:none;flex:none;-webkit-user-drag:none;user-select:none;background:#fff}
+.side-card{padding:20px;display:flex;flex-direction:column;gap:16px}
+.side-card h2{font:800 1.15rem var(--ff-display)}
+.stack{display:flex;flex-direction:column;gap:10px}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:.86rem;margin:0}
+.meta dt{color:var(--dim);font-weight:700}
+.meta dd{margin:0;overflow-wrap:anywhere;font-weight:600}
+.note{padding:12px 14px;border-radius:12px;background:rgba(34,225,255,.08);border:1px solid rgba(34,225,255,.3);font-size:.84rem;color:#c9f4ff}
+.note strong{color:#fff}
+.link-btn{align-self:flex-start;border:0;background:none;padding:0;color:var(--cyan);font-weight:700;font-size:.82rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.upload-err{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:rgba(255,107,135,.12);border:1px solid rgba(255,107,135,.5);color:#ffc2cd;font-size:.9rem;font-weight:600;margin-bottom:14px}
+
+/* =====================================================================
+   9. OVERLAYS: LIGHTBOX, CONFIRM DIALOG, TOASTS
+   ===================================================================== */
+.lightbox{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;background:rgba(3,4,18,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.lb-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
+.lb-title{flex:1;min-width:120px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-stage{flex:1;min-height:0;overflow:auto;display:flex;cursor:grab;padding:16px}
+.lb-stage.is-drag{cursor:grabbing;user-select:none}
+.lb-stage img{display:block;margin:auto;max-width:none;flex:none;background:#fff;border-radius:4px;box-shadow:0 20px 80px rgba(0,0,0,.7);-webkit-user-drag:none;user-select:none}
+.modal{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:20px;background:rgba(3,4,18,.7);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.modal-panel{width:min(440px,100%);padding:26px;border-radius:22px;background:linear-gradient(160deg,rgba(34,36,90,.97),rgba(15,16,48,.98));border:1px solid var(--line-2);box-shadow:0 40px 100px -20px rgba(0,0,0,.9),0 0 60px -10px rgba(139,92,255,.5)}
+.modal-panel h2{font:800 1.3rem var(--ff-display);margin-bottom:8px}
+.modal-panel p{color:var(--muted)}
+.modal-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-top:22px}
+.toasts{position:fixed;right:16px;bottom:16px;z-index:100;display:flex;flex-direction:column;gap:10px;width:min(380px,calc(100vw - 32px));pointer-events:none}
+.toast{display:flex;gap:11px;align-items:flex-start;padding:13px 14px;border-radius:14px;pointer-events:auto;background:rgba(14,16,48,.94);border:1px solid var(--line-2);box-shadow:0 18px 50px -10px rgba(0,0,0,.8);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);font-size:.9rem;font-weight:600}
+.toast .i{margin-top:2px}
+.toast-ok{border-color:rgba(61,255,176,.55)} .toast-ok .i{color:var(--ok)}
+.toast-error{border-color:rgba(255,107,135,.6)} .toast-error .i{color:var(--err)}
+.toast-info .i{color:var(--cyan)}
+.toast-warn{border-color:rgba(255,207,92,.55)} .toast-warn .i{color:var(--warn)}
+.toast-x{margin-left:auto;border:0;background:none;color:var(--muted);cursor:pointer;padding:2px;border-radius:6px}
+.toast-x:hover{color:#fff}
+
+/* =====================================================================
+   10. RESPONSIVE
+   ===================================================================== */
+@media (max-width:999px){
+  .builder{grid-template-columns:1fr}
+  .pane-switch{display:flex}
+  .builder[data-pane="edit"] .preview-col{display:none}
+  .builder[data-pane="preview"] .form-col{display:none}
+  .preview-col{position:static}
+  .paper-viewport{max-height:none}
+  .upload-grid{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .topbar{flex-wrap:wrap;gap:10px 12px}
+  .tabs{order:3;width:100%;margin:0}
+  .tab{flex:1;justify-content:center;padding:0 10px}
+  .top-right{margin-left:auto}
+  .save-status span.txt{display:none}
+}
+@media (max-width:640px){
+  .grid2{grid-template-columns:1fr}
+  .toolbar .spacer,.toolbar .sep{display:none}
+  .toolbar .btn{flex:1 1 calc(50% - 10px);white-space:normal;text-align:center}
+  .toolbar #btnPdf{flex-basis:100%}
+  .skill-row{grid-template-columns:minmax(0,1fr) auto}
+  .skill-row .range-wrap{grid-column:1/-1;order:3}
+  .themes{grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+  .login-card{padding:30px 22px 24px}
+  .stage{height:62vh}
+  .dropzone{min-height:300px;padding:30px 16px}
+  .viewer-bar .btn{flex:1 1 auto}
+  .modal-actions .btn{flex:1}
+}
+@media (max-width:400px){
+  .sec-head{padding:14px}
+  .sec-body{padding:2px 14px 16px}
+  .btn{padding:0 12px}
+  .skill-add{flex-wrap:wrap}
+  .skill-add .btn{flex:1}
+}
+
+/* Reduced motion: no ripples, spinning borders or long transitions */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  .ripple{display:none}
+}
+
+/* =====================================================================
+   11. PRINT — only the resume is printed
+   ===================================================================== */
+.print-sheet{display:none}
+@media print{
+  @page{size:A4;margin:0}
+  html,body{background:#fff!important;height:auto!important;min-height:0!important;overflow:visible!important;color:#000}
+  body>*:not(#printSheet){display:none!important}
+  #printSheet{display:block!important}
+  .print-table{width:100%;border-collapse:collapse;border:0}
+  .print-table td{padding:0;border:0}
+  .print-table thead{display:table-header-group}
+  .print-table tfoot{display:table-footer-group}
+  .pg-sp{height:11mm}
+  #printSheet .rs-paper{position:static!important;transform:none!important;width:210mm!important;min-height:0!important;padding:0!important;box-shadow:none!important;margin:0}
+  #printSheet .rs-paper,#printSheet .rs-paper *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printSheet .bar b{transition:none!important}
+  #printSheet a{color:inherit}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== SVG icon sprite (referenced with <use href="#i-name">) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b5cff"/><stop offset=".55" stop-color="#4f7cff"/><stop offset="1" stop-color="#22e1ff"/></linearGradient>
+  </defs>
+  <symbol id="logo" viewBox="0 0 48 48"><rect width="48" height="48" rx="14" fill="url(#lg)"/><path d="M15 11h13l8 8v18a2 2 0 0 1-2 2H15a2 2 0 0 1-2-2V13a2 2 0 0 1 2-2z" fill="#07082a" opacity=".92"/><path d="M28 11v8h8" fill="none" stroke="#8b5cff" stroke-width="2" stroke-linejoin="round"/><path d="M18 26h12M18 31h8" stroke="#22e1ff" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14zM10 11v6M14 11v6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M22 6l-10 7L2 6"/></symbol>
+  <symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></symbol>
+  <symbol id="i-zoom-in" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/></symbol>
+  <symbol id="i-zoom-out" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M8 11h6"/></symbol>
+  <symbol id="i-maximize" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
+</svg>
+
+<!-- ===== Fullscreen 3D background (Three.js) ===== -->
+<canvas id="bg3d" aria-hidden="true"></canvas>
+
+<div id="app">
+
+  <!-- =================================================================
+       LOGIN SCREEN
+       ================================================================= -->
+  <main id="loginScreen" class="login" aria-labelledby="loginTitle">
+    <div id="loginCard" class="login-card">
+      <span class="ring" aria-hidden="true"><i></i></span>
+      <div class="brand-lg lift" data-in>
+        <svg class="logo" aria-hidden="true"><use href="#logo"/></svg>
+        <span>Resume Studio</span>
+      </div>
+      <div class="lift" data-in>
+        <h1 id="loginTitle">Welcome back</h1>
+        <p class="sub">Sign in to build, preview and export your resume.</p>
+      </div>
+
+      <form id="loginForm" novalidate autocomplete="on" aria-describedby="loginError">
+        <div class="field" data-in>
+          <label for="loginUser">Username</label>
+          <input id="loginUser" class="inp" name="username" type="text" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" required>
+        </div>
+        <div class="field" data-in>
+          <label for="loginPass">Password</label>
+          <div class="pw-wrap">
+            <input id="loginPass" class="inp" name="password" type="password" autocomplete="current-password" required>
+            <button type="button" id="togglePass" class="pw-toggle" aria-label="Show password" aria-pressed="false">
+              <svg class="i" aria-hidden="true"><use id="togglePassIcon" href="#i-eye"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="loginError" class="login-error" role="alert" hidden>
+          <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>
+          <span id="loginErrorText"></span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" data-in>
+          Sign in <svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg>
+        </button>
+      </form>
+      <p class="login-foot" data-in>Demo sign-in · everything stays in your browser</p>
+    </div>
+  </main>
+
+  <!-- =================================================================
+       DASHBOARD (shown after sign-in)
+       ================================================================= -->
+  <div id="dashboard" hidden>
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    <header class="topbar" id="topbar">
+      <div class="brand">
+        <svg class="logo" aria-hidden="true"><use href="#logo"/></svg>
+        <span>Resume Studio</span>
+      </div>
+
+      <nav class="tabs" id="tabs" role="tablist" aria-label="Studio sections">
+        <span class="tab-ind" id="tabInd" aria-hidden="true"></span>
+        <button type="button" class="tab" role="tab" id="tab-builder" data-tab="builder" aria-controls="viewBuilder" aria-selected="true">
+          <svg class="i" aria-hidden="true"><use href="#i-file"/></svg> Resume Builder
+        </button>
+        <button type="button" class="tab" role="tab" id="tab-upload" data-tab="upload" aria-controls="viewUpload" aria-selected="false" tabindex="-1">
+          <svg class="i" aria-hidden="true"><use href="#i-image"/></svg> Upload Picture
+        </button>
+      </nav>
+
+      <div class="top-right">
+        <span class="save-status" id="saveStatus" role="status" aria-live="polite"><i class="save-dot" aria-hidden="true"></i><span class="txt" id="saveText">Autosave on</span></span>
+        <button type="button" class="btn btn-sm" id="logoutBtn"><svg class="i" aria-hidden="true"><use href="#i-logout"/></svg> Log out</button>
+      </div>
+    </header>
+
+    <main id="main" class="shell" tabindex="-1">
+
+      <!-- ============================ TAB 1 · RESUME BUILDER ============================ -->
+      <section id="viewBuilder" role="tabpanel" aria-labelledby="tab-builder">
+        <div class="page-head" data-in>
+          <div>
+            <h1 class="page-title">Resume Builder</h1>
+            <p class="sub">Fill in each section — the preview updates as you type and everything is saved automatically.</p>
+          </div>
+        </div>
+
+        <div class="toolbar card" role="toolbar" aria-label="Resume actions" data-in>
+          <button type="button" class="btn btn-sm" id="btnSample"><svg class="i" aria-hidden="true"><use href="#i-sparkle"/></svg> Fill sample</button>
+          <button type="button" class="btn btn-sm btn-danger" id="btnReset"><svg class="i" aria-hidden="true"><use href="#i-reset"/></svg> Reset</button>
+          <span class="sep" aria-hidden="true"></span>
+          <button type="button" class="btn btn-sm" id="btnExport"><svg class="i" aria-hidden="true"><use href="#i-download"/></svg> Export JSON</button>
+          <button type="button" class="btn btn-sm" id="btnImport"><svg class="i" aria-hidden="true"><use href="#i-upload"/></svg> Import JSON</button>
+          <input type="file" id="importInput" accept=".json,application/json" hidden aria-label="Import resume JSON file">
+          <span class="spacer" aria-hidden="true"></span>
+          <button type="button" class="btn btn-sm" id="btnCopy"><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg> Copy text</button>
+          <button type="button" class="btn btn-sm" id="btnEmail"><svg class="i" aria-hidden="true"><use href="#i-mail"/></svg> Email to my Gmail</button>
+          <button type="button" class="btn btn-sm btn-primary" id="btnPdf"><svg class="i" aria-hidden="true"><use href="#i-printer"/></svg> Download as PDF</button>
+        </div>
+
+        <div class="pane-switch" id="paneSwitch" role="group" aria-label="Show editor or preview" data-in>
+          <button type="button" data-pane="edit" aria-pressed="true">Edit</button>
+          <button type="button" data-pane="preview" aria-pressed="false">Preview</button>
+        </div>
+
+        <div class="builder" id="builder" data-pane="edit">
+
+          <!-- ---------- FORM ---------- -->
+          <form id="resumeForm" class="form-col" novalidate autocomplete="off" aria-label="Resume details">
+
+            <!-- 1 · Personal info -->
+            <section class="card sec" data-sec="personal" aria-labelledby="h-personal" data-in>
+              <div class="sec-head">
+                <span class="sec-no" aria-hidden="true">1</span>
+                <h2 id="h-personal">Personal info</h2>
+                <button type="button" class="sec-toggle" aria-expanded="true" aria-controls="b-personal" aria-label="Collapse Personal info"><svg class="i" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+              </div>
+              <div class="sec-body" id="b-personal">
+                <div class="grid2">
+                  <div class="field"><label for="f-name">Full name</label><input class="inp" id="f-name" data-p="name" maxlength="80" autocomplete="off" placeholder="Maya Lindqvist"></div>
+                  <div class="field"><label for="f-title">Job title</label><input class="inp" id="f-title" data-p="title" maxlength="80" autocomplete="off" placeholder="Senior Product Designer"></div>
+                  <div class="field"><label for="f-email">Gmail address</label><input class="inp" id="f-email" data-p="email" type="email" inputmode="email" maxlength="80" autocomplete="off" placeholder="you@gmail.com" aria-describedby="m-email"><span class="msg" id="m-email" aria-live="polite"></span></div>
+                  <div class="field"><label for="f-phone">Phone</label><input class="inp" id="f-phone" data-p="phone" type="tel" inputmode="tel" maxlength="24" autocomplete="off" placeholder="+1 555 010 4477" aria-describedby="m-phone"><span class="msg" id="m-phone" aria-live="polite"></span></div>
+                  <div class="field full"><label for="f-location">City / Country</label><input class="inp" id="f-location" data-p="location" maxlength="80" autocomplete="off" placeholder="Berlin, Germany"></div>
+                  <div class="field"><label for="f-linkedin">LinkedIn</label><input class="inp" id="f-linkedin" data-p="linkedin" maxlength="120" autocomplete="off" placeholder="linkedin.com/in/yourname"></div>
+                  <div class="field"><label for="f-portfolio">Portfolio / website</label><input class="inp" id="f-portfolio" data-p="portfolio" maxlength="120" autocomplete="off" placeholder="yourname.com"></div>
+                </div>
+              </div>
+            </section>
+
+            <!-- 2 · Summary -->
+            <section class="card sec" data-sec="summary" aria-labelledby="h-summary" data-in>
+              <div class="sec-head">
+                <span class="sec-no" aria-hidden="true">2</span>
+                <h2 id="h-summary">Professional summary</h2>
+                <button type="button" class="sec-toggle" aria-expanded="true" aria-controls="b-summary" aria-label="Collapse Professional summary"><svg class="i" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+              </div>
+              <div class="sec-body" id="b-summary">
+                <div class="field">
+                  <label for="f-summary">Summary</label>
+                  <textarea class="inp" id="f-summary" maxlength="900" rows="5" placeholder="Two or three sentences about who you are, what you do best and what you're looking for."></textarea>
+                  <span class="counter" id="summaryCount" aria-hidden="true">0 / 900</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- 3 · Experience -->
+            <section class="card sec" data-sec="experience" aria-labelledby="h-experience" data-in>
+              <div class="sec-head">
+                <span class="sec-no" aria-hidden="true">3</span>
+                <h2 id="h-experience">Work experience</h2>
+                <button type="button" class="sec-toggle" aria-expanded="true" aria-controls="b-experience" aria-label="Collapse Work experience"><svg class="i" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+              </div>
+              <div class="sec-body" id="b-experience">
+                <div class="list" data-list="experience"></div>
+                <p class="empty" data-empty="experience">No positions yet. Add your most recent role first.</p>
+                <div class="add-row"><button type="button" class="btn btn-sm" data-add="experience"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg> Add position</button></div>
+              </div>
+            </section>
+
+            <!-- 4 · Education -->
+            <section class="card sec" data-sec="education" aria-labelledby="h-education" data-in>
+              <div class="sec-head">
+                <span class="sec-no" aria-hidden="true">4</span>
+                <h2 id="h-education">Education</h2>
+                <button type="button" class="sec-toggle" aria-expanded="true" aria-controls="b-education" aria-label="Collapse Education"><svg class="i" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+              </div>
+              <div class="sec-body" id="b-education">
+                <div class="list" data-list="education"></div>
+                <p class="empty" data-empty="education">No education added yet.</p>
+                <div class="add-row"><button type="button" class="btn btn-sm" data-add="education"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg> Add education</button></div>
+              </div>
+            </section>
+
+            <!-- 5 · Skills -->
+            <section class="card sec" data-sec="skills" aria-labelledby="h-skills" data-in>
+              <div class="sec-head">
+                <span class="sec-no" aria-hidden="true">5</span>
+                <h2 id="h-skills">Skills</h2>
+                <button type="button" class="sec-toggle" aria-expanded="true" aria-controls="b-skills" aria-label="Collapse Skills"><svg class="i" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+              </div>
+              <div class="sec-body" id="b-skills">
+                <div class="skill-add">
+                  <label class="sr-only" for="skillInput">New skill</label>
+                  <input class="inp" id="skillInput" maxlength="40" autocomplete="off" placeholder="Type a skill and press Enter" aria-describedby="m-skill">
+                  <button type="button" class="btn btn-primary" id="skillAddBtn"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg> Add</button>
+                </div>
+                <p class="msg" id="m-skill" aria-live="polite"></p>
+                <div class="list" data-list="skills"></div>
+                <p class="empty" data-empty="skills">No skills yet. Add a tag, then drag its slider to set a 0–100 level.</p>
+              </div>
+            </section>
+
+            <!-- 6 · Languages -->
+            <section class="card sec" data-sec="languages" aria-labelledby="h-languages" data-in>
+              <div class="sec-head">
+                <span class="sec-no" aria-hidden="true">6</span>
+                <h2 id="h-languages">Languages</h2>
+                <button type="button" class="sec-toggle" aria-expanded="true" aria-controls="b-languages" aria-label="Collapse Languages"><svg class="i" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+              </div>
+              <div class="sec-body" id="b-languages">
+                <div class="list" data-list="languages"></div>
+                <p class="empty" data-empty="languages">No languages added yet.</p>
+                <div class="add-row"><button type="button" class="btn btn-sm" data-add="languages"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg> Add language</button></div>
+              </div>
+            </section>
+
+            <!-- 7 · Projects -->
+            <section class="card sec" data-sec="projects" aria-labelledby="h-projects" data-in>
+              <div class="sec-head">
+                <span class="sec-no" aria-hidden="true">7</span>
+                <h2 id="h-projects">Projects</h2>
+                <button type="button" class="sec-toggle" aria-expanded="true" aria-controls="b-projects" aria-label="Collapse Projects"><svg class="i" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+              </div>
+              <div class="sec-body" id="b-projects">
+                <div class="list" data-list="projects"></div>
+                <p class="empty" data-empty="projects">No projects added yet.</p>
+                <div class="add-row"><button type="button" class="btn btn-sm" data-add="projects"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg> Add project</button></div>
+              </div>
+            </section>
+
+            <!-- 8 · Certifications -->
+            <section class="card sec" data-sec="certifications" aria-labelledby="h-certifications" data-in>
+              <div class="sec-head">
+                <span class="sec-no" aria-hidden="true">8</span>
+                <h2 id="h-certifications">Certifications</h2>
+                <button type="button" class="sec-toggle" aria-expanded="true" aria-controls="b-certifications" aria-label="Collapse Certifications"><svg class="i" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+              </div>
+              <div class="sec-body" id="b-certifications">
+                <div class="list" data-list="certifications"></div>
+                <p class="empty" data-empty="certifications">No certifications added yet.</p>
+                <div class="add-row"><button type="button" class="btn btn-sm" data-add="certifications"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg> Add certification</button></div>
+              </div>
+            </section>
+          </form>
+
+          <!-- ---------- LIVE PREVIEW ---------- -->
+          <aside class="preview-col card" aria-label="Live resume preview" data-in>
+            <div class="pv-head">
+              <h2><i class="live-dot" aria-hidden="true"></i> Live preview</h2>
+              <div class="seg" id="zoomSeg" role="group" aria-label="Preview size">
+                <button type="button" data-zoom="fit" aria-pressed="true">Fit</button>
+                <button type="button" data-zoom="full" aria-pressed="false">100%</button>
+              </div>
+            </div>
+            <div class="pv-controls">
+              <div class="themes" id="themes" role="group" aria-label="Resume template"></div>
+              <div class="accents" id="accents" role="group" aria-label="Accent colour"></div>
+            </div>
+            <div class="paper-viewport" id="paperViewport" tabindex="0" aria-label="Resume preview (scrollable)">
+              <div class="paper-sizer" id="paperSizer">
+                <article class="rs-paper t-aurora" id="paper" aria-label="Resume"></article>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ============================ TAB 2 · UPLOAD A PICTURE ============================ -->
+      <section id="viewUpload" role="tabpanel" aria-labelledby="tab-upload" hidden>
+        <div class="page-head" data-in>
+          <div>
+            <h1 class="page-title">Upload a picture</h1>
+            <p class="sub">Already have your resume as an image? Keep it here, inspect it up close and send it to your Gmail.</p>
+          </div>
+        </div>
+
+        <div class="upload-grid">
+          <div id="upMain" data-in>
+            <div class="upload-err" id="upError" role="alert" hidden>
+              <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg><span id="upErrorText"></span>
+            </div>
+
+            <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Upload a resume picture. Click, press Enter, or drop a PNG, JPG or WEBP file here.">
+              <div class="dz-icon" aria-hidden="true"><svg class="i"><use href="#i-upload"/></svg></div>
+              <h2>Drop your resume picture here</h2>
+              <p>or click to browse. Large images are compressed automatically and stored privately in this browser.</p>
+              <div class="dz-types" aria-hidden="true"><span>PNG</span><span>JPG</span><span>WEBP</span></div>
+              <div class="busy" id="busy" hidden><div class="spinner" aria-hidden="true"></div><span>Optimising your picture…</span></div>
+            </div>
+
+            <div id="viewerCard" class="card viewer-card" hidden>
+              <div class="viewer-bar" role="toolbar" aria-label="Picture viewer">
+                <button type="button" class="btn btn-sm btn-icon" id="zOut" aria-label="Zoom out"><svg class="i" aria-hidden="true"><use href="#i-zoom-out"/></svg></button>
+                <span class="zoom-label" id="zLabel" aria-live="polite">100%</span>
+                <button type="button" class="btn btn-sm btn-icon" id="zIn" aria-label="Zoom in"><svg class="i" aria-hidden="true"><use href="#i-zoom-in"/></svg></button>
+                <button type="button" class="btn btn-sm" id="zFit">Fit</button>
+                <button type="button" class="btn btn-sm" id="btnFull"><svg class="i" aria-hidden="true"><use href="#i-maximize"/></svg> Fullscreen</button>
+                <span class="spacer" aria-hidden="true"></span>
+                <button type="button" class="btn btn-sm" id="btnReplace"><svg class="i" aria-hidden="true"><use href="#i-swap"/></svg> Replace</button>
+                <button type="button" class="btn btn-sm btn-danger" id="btnRemove"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg> Remove</button>
+              </div>
+              <div class="stage" id="stage" tabindex="0" aria-label="Uploaded resume picture (scroll or drag to pan)">
+                <img id="viewImg" alt="Your uploaded resume picture">
+              </div>
+              <div class="busy" id="busy2" hidden><div class="spinner" aria-hidden="true"></div><span>Optimising your picture…</span></div>
+            </div>
+          </div>
+
+          <aside class="card side-card" data-in aria-labelledby="h-send">
+            <h2 id="h-send">Send it to your Gmail</h2>
+            <div class="field">
+              <label for="upEmail">Gmail address</label>
+              <input class="inp" id="upEmail" type="email" inputmode="email" autocomplete="off" maxlength="80" placeholder="you@gmail.com" aria-describedby="m-upEmail">
+              <span class="msg" id="m-upEmail" aria-live="polite"></span>
+              <button type="button" class="link-btn" id="useResumeEmail" hidden></button>
+            </div>
+            <div class="stack">
+              <button type="button" class="btn btn-primary" id="btnDownloadImg" disabled><svg class="i" aria-hidden="true"><use href="#i-download"/></svg> Download picture</button>
+              <button type="button" class="btn" id="btnDraftImg" disabled><svg class="i" aria-hidden="true"><use href="#i-mail"/></svg> Download + open email draft</button>
+              <button type="button" class="btn" id="btnEmailJS" hidden><svg class="i" aria-hidden="true"><use href="#i-send"/></svg> Send with EmailJS</button>
+            </div>
+            <p class="note"><strong>Why two steps?</strong> A mailto: link can't attach files. Download the picture, then drag it into the email draft that opens.</p>
+            <dl class="meta" id="imgMeta" hidden>
+              <dt>File</dt><dd id="mName">–</dd>
+              <dt>Size</dt><dd id="mSize">–</dd>
+              <dt>Dimensions</dt><dd id="mDim">–</dd>
+              <dt>Saved</dt><dd id="mSaved">–</dd>
+            </dl>
+          </aside>
+        </div>
+        <input type="file" id="imgInput" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden aria-label="Choose a resume picture">
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- ===== Fullscreen picture viewer ===== -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Fullscreen picture view" hidden>
+  <div class="lb-bar">
+    <span class="lb-title" id="lbTitle">Resume picture</span>
+    <button type="button" class="btn btn-sm btn-icon" id="lbOut" aria-label="Zoom out"><svg class="i" aria-hidden="true"><use href="#i-zoom-out"/></svg></button>
+    <span class="zoom-label" id="lbLabel">100%</span>
+    <button type="button" class="btn btn-sm btn-icon" id="lbIn" aria-label="Zoom in"><svg class="i" aria-hidden="true"><use href="#i-zoom-in"/></svg></button>
+    <button type="button" class="btn btn-sm" id="lbFit">Fit</button>
+    <button type="button" class="btn btn-sm btn-primary" id="lbClose"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg> Close</button>
+  </div>
+  <div class="lb-stage" id="lbStage" tabindex="0" aria-label="Picture (scroll or drag to pan)"><img id="lbImg" alt="Your uploaded resume picture, full size"></div>
+</div>
+
+<!-- ===== Confirm dialog ===== -->
+<div id="confirm" class="modal" hidden>
+  <div class="modal-panel" role="alertdialog" aria-modal="true" aria-labelledby="cfTitle" aria-describedby="cfText">
+    <h2 id="cfTitle">Are you sure?</h2>
+    <p id="cfText"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="cfCancel">Cancel</button>
+      <button type="button" class="btn btn-danger-solid" id="cfOk">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toasts ===== -->
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+<!-- ===== Print sheet: filled with a clean copy of the resume right before printing ===== -->
+<div class="print-sheet" id="printSheet" aria-hidden="true"></div>
+
+<script>
+/* =====================================================================
+   ✉  EMAILJS CONFIG  —  OPTIONAL  (real email sending from the Upload tab)
+   ---------------------------------------------------------------------
+   Out of the box the app uses mailto: links (no keys needed). If you later
+   want one-click sending, create a free account at https://www.emailjs.com,
+   fill in the three values below and set  enabled: true.
+   A "Send with EmailJS" button then appears on the Upload tab.
+   In your EmailJS template use the variables:
+     {{to_email}}  {{from_name}}  {{message}}  {{resume_image}} (data URL)
+   Check EmailJS's attachment / size limits for your plan.
+   ===================================================================== */
+window.EMAILJS_CONFIG = {
+  enabled: false,      // ← set to true once the keys below are filled in
+  publicKey: '',       // EmailJS → Account → General → Public Key
+  serviceId: '',       // EmailJS → Email Services → Service ID
+  templateId: ''       // EmailJS → Email Templates → Template ID
+};
+</script>
+
+<!-- Libraries (cdnjs only). The app still works if they cannot load: it falls back to a plain background and instant transitions. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+/* =====================================================================
+   RESUME STUDIO — application script
+   Sections:  1 Config · 2 Utilities · 3 GSAP fallback · 4 Toasts & dialogs
+              5 3D background (Three.js) · 6 Login · 7 Tabs & transitions
+              8 Resume model · 9 Resume builder · 10 Preview/print/export
+              11 Upload-a-picture · 12 Boot
+   ===================================================================== */
+(function () {
+'use strict';
+
+/* =====================================================================
+   1. CONFIG
+   ===================================================================== */
+
+/* ⚠ DEMO LOGIN ONLY — THIS IS NOT REAL SECURITY.
+   The credentials sit in plain text in this file, so anybody who opens the
+   page source can read them. It only gates the interface of this demo.
+   Real accounts need a server that verifies credentials. */
+const DEMO_USER = '1212';
+const DEMO_PASS = '1212';
+
+const KEY = { session: 'resumeStudio.session', tab: 'resumeStudio.tab', resume: 'resumeStudio.resume.v1' };
+const IMG_CFG = {
+  maxWidth: 1600, maxHeight: 6000, quality: 0.9,
+  maxBytes: 12 * 1024 * 1024,        // reject files above this size
+  keepBytes: 1.5 * 1024 * 1024,      // small images are stored untouched
+  types: ['image/png', 'image/jpeg', 'image/webp'],
+  exts: ['png', 'jpg', 'jpeg', 'webp']
+};
+const DB_CFG = { name: 'resume-studio', store: 'kv', key: 'resume-image' };
+const THEMES = [{ id: 'aurora', name: 'Aurora' }, { id: 'classic', name: 'Classic' }, { id: 'studio', name: 'Studio' }];
+const ACCENTS = [
+  { hex: '#6d3df0', name: 'Violet' }, { hex: '#0a6fd6', name: 'Blue' }, { hex: '#d6246e', name: 'Rose' },
+  { hex: '#0a7d5e', name: 'Emerald' }, { hex: '#b84e08', name: 'Amber' }
+];
+const PROFICIENCY = ['Native', 'Fluent', 'Advanced', 'Intermediate', 'Basic'];
+
+/* =====================================================================
+   2. UTILITIES
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const ic = name => '<svg class="i" aria-hidden="true"><use href="#i-' + name + '"/></svg>';
+const fmtBytes = b => b < 1024 ? b + ' B' : b < 1048576 ? Math.round(b / 1024) + ' KB' : (b / 1048576).toFixed(1) + ' MB';
+const slug = s => String(s || '').toLowerCase().normalize('NFKD').replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+/* Motion preferences — heavy animation is turned down for people who ask for it. */
+const reduceMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+let reduceMotion = reduceMQ.matches;
+const D = d => (reduceMotion ? 0.001 : d);
+
+/* Storage that never throws (private windows / blocked storage fall back to memory). */
+const memStore = {};
+const store = {
+  get(area, k) { try { return window[area].getItem(k); } catch (e) { return memStore[area + k] != null ? memStore[area + k] : null; } },
+  set(area, k, v) { try { window[area].setItem(k, v); return true; } catch (e) { memStore[area + k] = v; return false; } },
+  del(area, k) { try { window[area].removeItem(k); } catch (e) { /* ignore */ } delete memStore[area + k]; }
+};
+
+/* =====================================================================
+   3. GSAP — real library when available, tiny instant-apply fallback otherwise
+   ===================================================================== */
+const gsap = window.gsap || (function makeFallback() {
+  const RESERVED = new Set(['duration', 'delay', 'ease', 'stagger', 'onComplete', 'onUpdate', 'overwrite', 'clearProps', 'transformPerspective', 'repeat', 'yoyo', 'transformOrigin', 'keyframes', 'immediateRender', 'force3D', 'paused']);
+  const TF = { x: v => 'translateX(' + v + 'px)', y: v => 'translateY(' + v + 'px)', scale: v => 'scale(' + v + ')', rotation: v => 'rotate(' + v + 'deg)', rotationX: v => 'rotateX(' + v + 'deg)', rotationY: v => 'rotateY(' + v + 'deg)' };
+  const list = t => typeof t === 'string' ? $$(t) : (t instanceof Element ? [t] : (t && typeof t.length === 'number' ? Array.from(t) : (t ? [t] : [])));
+  function apply(el, vars) {
+    if (!(el instanceof Element)) { for (const k in vars) if (!RESERVED.has(k)) el[k] = vars[k]; return; }
+    const tf = []; let hasTf = false;
+    for (const k in vars) {
+      if (RESERVED.has(k)) continue;
+      const v = vars[k];
+      if (TF[k]) { hasTf = true; tf.push(TF[k](v)); }
+      else if (k === 'autoAlpha') { el.style.opacity = v; el.style.visibility = v ? 'inherit' : 'hidden'; }
+      else if (k.indexOf('--') === 0) el.style.setProperty(k, v);
+      else el.style[k] = (typeof v === 'number' && k !== 'opacity' && k !== 'zIndex') ? v + 'px' : v;
+    }
+    if (hasTf) el.style.transform = tf.join(' ');
+    if (vars.clearProps) String(vars.clearProps).split(',').forEach(p => {
+      p = p.trim();
+      if (p === 'all') { el.style.transform = ''; el.style.opacity = ''; el.style.filter = ''; } else el.style[p] = '';
+    });
+  }
+  const run = (targets, vars) => { list(targets).forEach(el => apply(el, vars)); if (vars && vars.onComplete) setTimeout(vars.onComplete, 0); };
+  const api = {
+    set: (t, v) => { list(t).forEach(el => apply(el, v)); },
+    to: (t, v) => { run(t, v); return api; },
+    from: () => api,
+    fromTo: (t, f, v) => { run(t, v); return api; },
+    killTweensOf: () => {},
+    timeline: () => {
+      const tl = {
+        to: (t, v) => { run(t, v); return tl; }, from: () => tl,
+        fromTo: (t, f, v) => { run(t, v); return tl; },
+        add: fn => { if (typeof fn === 'function') setTimeout(fn, 0); return tl; },
+        call: fn => { setTimeout(fn, 0); return tl; }
+      };
+      return tl;
+    }
+  };
+  return api;
+})();
+
+/* =====================================================================
+   4. TOASTS, CONFIRM DIALOG, RIPPLE
+   ===================================================================== */
+function toast(msg, type, ms) {
+  type = type || 'info';
+  const host = $('#toasts');
+  while (host.children.length >= 4) host.firstElementChild.remove();
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.innerHTML = ic(type === 'ok' ? 'check' : (type === 'error' || type === 'warn') ? 'alert' : 'info') +
+    '<span></span><button type="button" class="toast-x" aria-label="Dismiss message">' + ic('x') + '</button>';
+  el.querySelector('span').textContent = msg;
+  host.appendChild(el);
+  gsap.fromTo(el, { y: 24, opacity: 0, scale: 0.96 }, { y: 0, opacity: 1, scale: 1, duration: D(0.4), ease: 'power3.out' });
+  let closed = false;
+  const close = () => {
+    if (closed) return; closed = true;
+    gsap.to(el, { opacity: 0, x: 40, duration: D(0.3), ease: 'power2.in', onComplete: () => el.remove() });
+  };
+  el.querySelector('.toast-x').addEventListener('click', close);
+  setTimeout(close, ms || ((type === 'error' || type === 'warn') ? 6500 : 3800));
+}
+
+function confirmDialog(opts) {
+  return new Promise(resolve => {
+    const m = $('#confirm'), okB = $('#cfOk'), noB = $('#cfCancel'), prev = document.activeElement;
+    $('#cfTitle').textContent = opts.title;
+    $('#cfText').textContent = opts.text;
+    okB.textContent = opts.ok || 'Confirm';
+    okB.className = 'btn ' + (opts.danger === false ? 'btn-primary' : 'btn-danger-solid');
+    m.hidden = false;
+    gsap.fromTo(m, { opacity: 0 }, { opacity: 1, duration: D(0.2) });
+    gsap.fromTo($('.modal-panel', m), { y: 26, scale: 0.96, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: D(0.35), ease: 'back.out(1.6)' });
+    noB.focus();
+    const onKey = e => {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(false); }
+      else if (e.key === 'Tab') {
+        e.preventDefault();
+        const f = [noB, okB], i = f.indexOf(document.activeElement);
+        f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+      }
+    };
+    const onBackdrop = e => { if (e.target === m) done(false); };
+    function done(v) {
+      document.removeEventListener('keydown', onKey, true);
+      m.removeEventListener('click', onBackdrop);
+      okB.onclick = noB.onclick = null;
+      m.hidden = true;
+      if (prev && prev.focus) prev.focus();
+      resolve(v);
+    }
+    document.addEventListener('keydown', onKey, true);
+    m.addEventListener('click', onBackdrop);
+    okB.onclick = () => done(true);
+    noB.onclick = () => done(false);
+  });
+}
+
+/* Ripple on every .btn press (mouse / touch only, skipped for reduced motion). */
+function initRipple() {
+  document.addEventListener('pointerdown', e => {
+    if (reduceMotion) return;
+    const b = e.target.closest && e.target.closest('.btn');
+    if (!b || b.disabled) return;
+    const r = b.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2;
+    const s = document.createElement('span');
+    s.className = 'ripple';
+    s.style.cssText = 'width:' + d + 'px;height:' + d + 'px;left:' + (e.clientX - r.left - d / 2) + 'px;top:' + (e.clientY - r.top - d / 2) + 'px';
+    b.appendChild(s);
+    s.addEventListener('animationend', () => s.remove());
+    setTimeout(() => s.remove(), 900);
+  });
+}
+
+/* =====================================================================
+   5. 3D BACKGROUND — Three.js particles + wireframe / glass shapes
+   ===================================================================== */
+/* Software renderers (no GPU) get a light profile straight away: fewer particles,
+   no antialiasing, and the login card's spinning border is left static
+   (an endlessly animated masked layer is costly without a GPU). */
+const SOFTWARE_GL = (function () {
+  try {
+    const c = document.createElement('canvas'), gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (!gl) return false;
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const name = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : '';
+    const lose = gl.getExtension('WEBGL_lose_context'); if (lose) lose.loseContext();
+    return /swiftshader|llvmpipe|softpipe|software|basic render/i.test(name);
+  } catch (e) { return false; }
+})();
+if (SOFTWARE_GL) document.documentElement.classList.add('lite');
+
+const Bg = (function () {
+  const canvas = $('#bg3d');
+  const api = { ok: false, warp() {}, setReduced() {} };
+  if (!window.THREE) { canvas.style.display = 'none'; return api; }
+  const T = window.THREE;
+
+  const software = SOFTWARE_GL;
+  const small = window.innerWidth < 768 || window.matchMedia('(pointer: coarse)').matches || software;
+
+  let renderer;
+  try {
+    renderer = new T.WebGLRenderer({ canvas: canvas, antialias: !small, alpha: true, powerPreference: 'high-performance' });
+  } catch (err) { canvas.style.display = 'none'; return api; }
+  let dpr = Math.min(window.devicePixelRatio || 1, software ? 1 : (small ? 1.25 : 1.75));   // capped device pixel ratio
+  renderer.setPixelRatio(dpr);
+  renderer.setClearColor(0x000000, 0);
+
+  const scene = new T.Scene();
+  scene.fog = new T.FogExp2(0x05061a, 0.028);
+  const camera = new T.PerspectiveCamera(55, 1, 0.1, 100);
+  camera.position.set(0, 0, 9);
+  const world = new T.Group();
+  scene.add(world);
+
+  scene.add(new T.AmbientLight(0x7a80ff, 0.55));
+  const l1 = new T.PointLight(0x8b5cff, 2.4, 45); l1.position.set(-7, 4, 6); scene.add(l1);
+  const l2 = new T.PointLight(0x22e1ff, 2.1, 45); l2.position.set(7, -3, 6); scene.add(l2);
+
+  /* soft round sprite for the particles */
+  const sprite = (function () {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    return new T.CanvasTexture(c);
+  })();
+
+  const COUNT = small ? 380 : 1100;                                                       // fewer particles on mobile
+  const palette = [0x8b5cff, 0x22e1ff, 0xff4fd8, 0x4f7cff].map(h => new T.Color(h));
+  const pos = new Float32Array(COUNT * 3), col = new Float32Array(COUNT * 3);
+  for (let i = 0; i < COUNT; i++) {
+    pos[i * 3] = (Math.random() - 0.5) * 36;
+    pos[i * 3 + 1] = (Math.random() - 0.5) * 24;
+    pos[i * 3 + 2] = (Math.random() - 0.5) * 28 - 4;
+    const c = palette[(Math.random() * palette.length) | 0];
+    col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+  }
+  const geo = new T.BufferGeometry();
+  geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new T.BufferAttribute(col, 3));
+  const points = new T.Points(geo, new T.PointsMaterial({
+    size: small ? 0.16 : 0.13, map: sprite, vertexColors: true, transparent: true, opacity: 0.9,
+    depthWrite: false, blending: T.AdditiveBlending, sizeAttenuation: true
+  }));
+  world.add(points);
+
+  const shapes = [];
+  function place(m, x, y, z, spin) {
+    m.position.set(x, y, z);
+    m.userData = { y0: y, sx: spin[0], sy: spin[1], ph: Math.random() * 6.28 };
+    shapes.push(m); world.add(m);
+  }
+  const wire = (g, color, x, y, z, spin, o) => place(new T.Mesh(g, new T.MeshBasicMaterial({ color: color, wireframe: true, transparent: true, opacity: o || 0.38 })), x, y, z, spin);
+  function glass(g, color, x, y, z, spin) {
+    const m = new T.Mesh(g, new T.MeshPhongMaterial({ color: color, transparent: true, opacity: 0.16, shininess: 140, specular: 0xffffff, flatShading: true, side: T.DoubleSide, depthWrite: false }));
+    m.add(new T.LineSegments(new T.EdgesGeometry(g), new T.LineBasicMaterial({ color: color, transparent: true, opacity: 0.8 })));
+    place(m, x, y, z, spin);
+  }
+  const builders = [
+    () => wire(new T.IcosahedronGeometry(2.3, 1), 0x8b5cff, -6.5, 2.6, -3.5, [0.12, 0.18]),
+    () => wire(new T.TorusKnotGeometry(1.25, 0.34, 110, 14), 0x22e1ff, 6.6, -1.8, -4, [0.16, 0.1]),
+    () => glass(new T.OctahedronGeometry(1.7), 0xff4fd8, 5.2, 3.4, -2, [0.2, 0.14]),
+    () => wire(new T.TorusGeometry(2.6, 0.035, 12, 120), 0x22e1ff, -5.4, -3.4, -2.5, [0.25, 0.08], 0.5),
+    () => glass(new T.DodecahedronGeometry(1.35), 0x8b5cff, -2.6, -0.2, -7, [0.1, 0.16]),
+    () => glass(new T.IcosahedronGeometry(0.95), 0x22e1ff, 2.4, -3.8, -1.5, [0.18, 0.22]),
+    () => wire(new T.OctahedronGeometry(1.1), 0xff4fd8, -1.2, 4.2, -5, [0.2, 0.2])
+  ];
+  builders.slice(0, small ? 4 : builders.length).forEach(b => b());
+
+  const mouse = { x: 0, y: 0, tx: 0, ty: 0 }, scrollV = { v: 0, t: 0 }, boost = { v: 0 };
+  let reduced = reduceMotion, running = false, frozen = false, raf = 0, time = 0, last = 0, accDt = 0, accN = 0;
+
+  window.addEventListener('pointermove', e => { mouse.tx = (e.clientX / window.innerWidth - 0.5) * 2; mouse.ty = (e.clientY / window.innerHeight - 0.5) * 2; requestStill(); }, { passive: true });
+  window.addEventListener('scroll', () => {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    scrollV.t = max > 0 ? clamp(window.scrollY / max, 0, 1) : 0;
+    requestStill();
+  }, { passive: true });
+
+  /* When the scene was frozen for speed, still answer mouse/scroll with one render per input frame. */
+  let stillQueued = false;
+  function requestStill() {
+    if (!frozen || reduced || stillQueued) return;
+    stillQueued = true;
+    requestAnimationFrame(() => {
+      stillQueued = false;
+      mouse.x = mouse.tx; mouse.y = mouse.ty; scrollV.v = scrollV.t;
+      renderOnce();
+    });
+  }
+
+  function update(dt) {
+    time += dt;
+    if (!reduced) {
+      mouse.x += (mouse.tx - mouse.x) * 0.05; mouse.y += (mouse.ty - mouse.y) * 0.05;
+      scrollV.v += (scrollV.t - scrollV.v) * 0.06;
+    }
+    const b = 1 + boost.v * 6;
+    world.rotation.y = mouse.x * 0.18 + scrollV.v * 0.6 + time * 0.02;
+    world.rotation.x = -mouse.y * 0.1 + scrollV.v * 0.25;
+    camera.position.x = mouse.x * 0.9;
+    camera.position.y = -mouse.y * 0.6 - scrollV.v * 2.2;
+    camera.position.z = 9 - boost.v * 3.2;
+    camera.lookAt(0, -scrollV.v * 1.2, 0);
+    points.rotation.y = time * 0.015 * b;
+    points.rotation.x = time * 0.006;
+    for (let i = 0; i < shapes.length; i++) {
+      const s = shapes[i], u = s.userData;
+      s.rotation.x += u.sx * dt * b; s.rotation.y += u.sy * dt * b;
+      s.position.y = u.y0 + Math.sin(time * 0.4 + u.ph) * 0.35;
+    }
+  }
+  /* Adaptive quality: if frames are slow, render fewer pixels; if still slow, freeze on a still frame. */
+  function adapt(rawDt) {
+    accDt += rawDt; accN++;
+    if (accN < 6 || (accDt < 1.5 && accN < 40)) return;           // judge over ~1.5 s of real time
+    const avg = accDt / accN; accDt = 0; accN = 0;
+    if (avg <= 0.06) return;
+    if (dpr > 0.55) { dpr = Math.max(0.5, dpr - 0.25); renderer.setPixelRatio(dpr); resize(); }
+    else if (avg > 0.1) { frozen = true; stop(); renderOnce(); }
+  }
+  function frame(now) {
+    if (!running) return;
+    raf = requestAnimationFrame(frame);
+    const raw = (now - last) / 1000 || 0.016, dt = Math.min(raw, 0.05); last = now;
+    update(dt);
+    renderer.render(scene, camera);
+    adapt(raw);
+  }
+  function renderOnce() { update(0); renderer.render(scene, camera); }
+  function start() {
+    if (running || reduced || frozen || document.hidden) return;
+    running = true; last = performance.now(); raf = requestAnimationFrame(frame);
+  }
+  function stop() { running = false; cancelAnimationFrame(raf); }
+  function resize() {
+    const w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    if (!running) renderOnce();
+  }
+  window.addEventListener('resize', debounce(resize, 120));
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else start(); });   // pause when tab hidden
+  canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); stop(); });
+  canvas.addEventListener('webglcontextrestored', () => { start(); });
+
+  resize();
+  if (reduced) renderOnce(); else start();
+
+  api.ok = true;
+  api.warp = function () {                                    // little "hyperspace" burst on sign-in
+    if (reduced) return;
+    gsap.fromTo(boost, { v: 0 }, { v: 1, duration: 0.55, ease: 'power2.out', onComplete: () => gsap.to(boost, { v: 0, duration: 1.5, ease: 'power3.inOut' }) });
+  };
+  api.setReduced = function (flag) {
+    reduced = flag;
+    if (flag) { stop(); mouse.x = mouse.y = mouse.tx = mouse.ty = 0; renderOnce(); } else start();
+  };
+  return api;
+})();
+
+/* =====================================================================
+   6. LOGIN
+   ===================================================================== */
+const login = {
+  screen: $('#loginScreen'), card: $('#loginCard'), form: $('#loginForm'),
+  user: $('#loginUser'), pass: $('#loginPass'), err: $('#loginError'), errText: $('#loginErrorText')
+};
+
+function clearLoginError() {
+  login.err.hidden = true;
+  login.card.classList.remove('has-error');
+  login.user.removeAttribute('aria-invalid');
+  login.pass.removeAttribute('aria-invalid');
+}
+
+function loginFail() {
+  login.errText.textContent = 'Incorrect username or password. Please try again.';
+  login.err.hidden = false;
+  login.card.classList.add('has-error');
+  login.user.setAttribute('aria-invalid', 'true');
+  login.pass.setAttribute('aria-invalid', 'true');
+  login.pass.value = '';
+  login.pass.focus();
+  if (!reduceMotion) {
+    gsap.timeline()
+      .to(login.card, { x: -16, duration: 0.06 }).to(login.card, { x: 14, duration: 0.08 })
+      .to(login.card, { x: -10, duration: 0.08 }).to(login.card, { x: 6, duration: 0.07 })
+      .to(login.card, { x: 0, duration: 0.12, ease: 'power2.out' });
+    gsap.fromTo(login.err, { y: -8, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power2.out' });
+  }
+}
+
+function initAuth() {
+  const toggle = $('#togglePass'), icon = $('#togglePassIcon');
+  toggle.addEventListener('click', () => {
+    const show = login.pass.type === 'password';
+    login.pass.type = show ? 'text' : 'password';
+    toggle.setAttribute('aria-pressed', String(show));
+    toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    icon.setAttribute('href', show ? '#i-eye-off' : '#i-eye');
+    login.pass.focus();
+  });
+  login.form.addEventListener('submit', e => {                 // Enter key in either field also lands here
+    e.preventDefault();
+    if (login.user.value === DEMO_USER && login.pass.value === DEMO_PASS) {
+      clearLoginError();
+      enterDashboard(true);
+    } else loginFail();
+  });
+  [login.user, login.pass].forEach(i => i.addEventListener('input', clearLoginError));
+  $('#logoutBtn').addEventListener('click', signOut);
+}
+
+/* 3D tilt that follows the cursor + a moving glare */
+function initTilt() {
+  const card = login.card;
+  login.screen.addEventListener('pointermove', e => {
+    if (reduceMotion || e.pointerType === 'touch') return;
+    const nx = (e.clientX / window.innerWidth - 0.5) * 2, ny = (e.clientY / window.innerHeight - 0.5) * 2;
+    gsap.to(card, { rotationY: nx * 11, rotationX: -ny * 9, transformPerspective: 900, duration: 0.5, ease: 'power2.out', overwrite: 'auto' });
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+    card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+    card.style.setProperty('--glare', '1');
+  });
+  login.screen.addEventListener('pointerleave', () => {
+    gsap.to(card, { rotationY: 0, rotationX: 0, duration: 0.7, ease: 'power3.out', overwrite: 'auto' });
+    card.style.setProperty('--glare', '0');
+  });
+}
+
+function enterLogin() {
+  gsap.fromTo(login.card, { y: 44, scale: 0.94, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: D(0.8), ease: 'power3.out', clearProps: 'transform,opacity,filter' });
+  gsap.fromTo($$('[data-in]', login.card), { y: reduceMotion ? 0 : 18, opacity: 0 }, { y: 0, opacity: 1, duration: D(0.6), stagger: reduceMotion ? 0 : 0.08, delay: reduceMotion ? 0 : 0.2, ease: 'power3.out', clearProps: 'transform,opacity' });
+}
+
+function enterDashboard(animated) {
+  store.set('sessionStorage', KEY.session, '1');
+  const dash = $('#dashboard');
+  const reveal = () => {
+    login.screen.hidden = true;
+    dash.hidden = false;
+    initDashboard();
+    setTab(store.get('sessionStorage', KEY.tab) || 'builder', { instant: true });
+    gsap.fromTo('#topbar', { y: -44, opacity: 0 }, { y: 0, opacity: 1, duration: D(0.6), ease: 'power3.out', clearProps: 'transform,opacity' });
+    enterView(VIEWS[currentTab]);
+    window.scrollTo(0, 0);
+    $('#main').focus({ preventScroll: true });
+  };
+  if (!animated || reduceMotion) { reveal(); return; }
+  Bg.warp();
+  gsap.timeline()
+    .to(login.card, { scale: 0.9, y: -26, opacity: 0, filter: 'blur(10px)', duration: 0.55, ease: 'power2.in' })
+    .add(reveal);
+}
+
+function signOut() {
+  store.del('sessionStorage', KEY.session);
+  closeLightbox();
+  const dash = $('#dashboard');
+  gsap.to(dash, {
+    opacity: 0, y: -18, duration: D(0.4), ease: 'power2.in',
+    onComplete: () => {
+      dash.hidden = true;
+      gsap.set(dash, { clearProps: 'opacity,transform' });
+      login.screen.hidden = false;
+      login.form.reset(); clearLoginError();
+      login.pass.type = 'password';
+      $('#togglePass').setAttribute('aria-pressed', 'false');
+      $('#togglePass').setAttribute('aria-label', 'Show password');
+      $('#togglePassIcon').setAttribute('href', '#i-eye');
+      gsap.set(login.card, { clearProps: 'all' });
+      window.scrollTo(0, 0);
+      enterLogin();
+      login.user.focus({ preventScroll: true });
+    }
+  });
+}
+
+/* =====================================================================
+   7. TABS (sliding indicator) & PAGE TRANSITIONS
+   ===================================================================== */
+const VIEWS = { builder: $('#viewBuilder'), upload: $('#viewUpload') };
+let currentTab = 'builder', switching = false, pendingTab = null;
+
+function enterView(view) {
+  const items = $$('[data-in]', view);
+  gsap.fromTo(items, { y: reduceMotion ? 0 : 28, opacity: 0 },
+    { y: 0, opacity: 1, duration: D(0.7), stagger: reduceMotion ? 0 : 0.07, ease: 'power3.out', clearProps: 'transform,opacity' });
+}
+
+function positionIndicator(instant) {
+  const act = $('.tab[aria-selected="true"]'), ind = $('#tabInd');
+  if (!act || !act.offsetWidth) return;
+  const vars = { x: act.offsetLeft, width: act.offsetWidth };
+  if (instant || reduceMotion) gsap.set(ind, vars);
+  else gsap.to(ind, Object.assign({ duration: 0.5, ease: 'power3.out' }, vars));
+}
+
+function setTab(name, opts) {
+  opts = opts || {};
+  if (!VIEWS[name]) name = 'builder';
+  if (switching) { pendingTab = name; return; }
+  const prev = currentTab;
+  currentTab = name;
+  $$('.tab').forEach(t => { const on = t.dataset.tab === name; t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1; });
+  store.set('sessionStorage', KEY.tab, name);
+  positionIndicator(opts.instant);
+  const toEl = VIEWS[name], fromEl = VIEWS[prev];
+  if (opts.instant || prev === name) {
+    Object.keys(VIEWS).forEach(k => { VIEWS[k].hidden = VIEWS[k] !== toEl; });
+    if (name === 'builder') fitPaper(); else uploadShown();
+    return;
+  }
+  switching = true;
+  gsap.to(fromEl, {
+    opacity: 0, y: -14, duration: D(0.22), ease: 'power2.in',
+    onComplete: () => {
+      fromEl.hidden = true;
+      gsap.set(fromEl, { clearProps: 'opacity,transform' });
+      toEl.hidden = false;
+      if (name === 'builder') fitPaper(); else uploadShown();
+      enterView(toEl);
+      window.scrollTo(0, 0);
+      switching = false;
+      if (pendingTab && pendingTab !== currentTab) { const p = pendingTab; pendingTab = null; setTab(p); } else pendingTab = null;
+    }
+  });
+}
+
+function initTabs() {
+  const tabs = $$('.tab');
+  tabs.forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
+  $('#tabs').addEventListener('keydown', e => {                // arrow-key navigation (WAI-ARIA tabs pattern)
+    const i = tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    let n = -1;
+    if (e.key === 'ArrowRight') n = (i + 1) % tabs.length;
+    else if (e.key === 'ArrowLeft') n = (i - 1 + tabs.length) % tabs.length;
+    else if (e.key === 'Home') n = 0;
+    else if (e.key === 'End') n = tabs.length - 1;
+    if (n < 0) return;
+    e.preventDefault(); tabs[n].focus(); setTab(tabs[n].dataset.tab);
+  });
+  if (window.ResizeObserver) new ResizeObserver(() => positionIndicator(true)).observe($('#tabs'));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => positionIndicator(true));
+}
+
+/* =====================================================================
+   8. RESUME MODEL — defaults, sample data, validation, sanitising
+   ===================================================================== */
+const defaultResume = () => ({
+  theme: 'aurora', accent: ACCENTS[0].hex,
+  personal: { name: '', title: '', email: '', phone: '', location: '', linkedin: '', portfolio: '' },
+  summary: '', experience: [], education: [], skills: [], languages: [], projects: [], certifications: []
+});
+
+const SAMPLE = {
+  theme: 'aurora', accent: ACCENTS[0].hex,
+  personal: { name: 'Maya Lindqvist', title: 'Senior Product Designer', email: 'maya.lindqvist.demo@gmail.com', phone: '+1 555 010 4477', location: 'Berlin, Germany', linkedin: 'linkedin.com/in/maya-lindqvist', portfolio: 'mayalindqvist.design' },
+  summary: 'Product designer with 8+ years shaping calm, data-heavy tools into products people love. I lead small cross-functional squads, run research that changes roadmaps, and ship design systems that engineers actually enjoy using.',
+  experience: [
+    { role: 'Senior Product Designer', company: 'Northwind Labs', start: 'Mar 2021', end: '', current: true, bullets: 'Led the redesign of the analytics workspace used by 40,000 teams\nCut onboarding time by 38% with a guided setup flow\nBuilt a 120-component design system adopted by 6 squads' },
+    { role: 'Product Designer', company: 'Brightpath Studio', start: 'Jun 2017', end: 'Feb 2021', current: false, bullets: 'Designed and shipped 3 mobile apps from concept to launch\nRan 60+ user interviews that reshaped the product roadmap' }
+  ],
+  education: [
+    { school: 'Royal College of Art', degree: 'MA Information Experience Design', years: '2015 – 2017', gpa: '3.9 / 4.0' },
+    { school: 'University of Gothenburg', degree: 'BSc Interaction Design', years: '2011 – 2015', gpa: '' }
+  ],
+  skills: [
+    { name: 'Figma', level: 95 }, { name: 'Design systems', level: 90 }, { name: 'User research', level: 85 },
+    { name: 'Prototyping', level: 88 }, { name: 'HTML & CSS', level: 72 }, { name: 'Facilitation', level: 80 }
+  ],
+  languages: [{ name: 'Swedish', level: 'Native' }, { name: 'English', level: 'Fluent' }, { name: 'German', level: 'Intermediate' }],
+  projects: [
+    { name: 'Open-source icon set', link: 'github.com/maya/lineicons', description: '1,200 icons used by 15k developers; maintained since 2019.' }
+  ],
+  certifications: [
+    { name: 'NN/g UX Certification', issuer: 'Nielsen Norman Group', year: '2020' }
+  ]
+};
+
+const str = (v, max) => (typeof v === 'string' ? v : (typeof v === 'number' ? String(v) : '')).slice(0, max || 500);
+
+/* Turns anything (an import file, old saved data) into a safe, complete resume object. */
+function normalizeResume(raw) {
+  const r = defaultResume();
+  if (!raw || typeof raw !== 'object') return r;
+  const p = raw.personal && typeof raw.personal === 'object' ? raw.personal : {};
+  Object.keys(r.personal).forEach(k => { r.personal[k] = str(p[k], 120); });
+  r.summary = str(raw.summary, 900);
+  if (THEMES.some(t => t.id === raw.theme)) r.theme = raw.theme;
+  if (ACCENTS.some(a => a.hex === raw.accent)) r.accent = raw.accent;
+  const arr = (v, n) => (Array.isArray(v) ? v.slice(0, n).filter(x => x && typeof x === 'object') : []);
+  r.experience = arr(raw.experience, 30).map(e => ({ id: uid(), role: str(e.role, 100), company: str(e.company, 100), start: str(e.start, 30), end: str(e.end, 30), current: !!e.current, bullets: str(e.bullets, 2000) }));
+  r.education = arr(raw.education, 20).map(e => ({ id: uid(), school: str(e.school, 100), degree: str(e.degree, 100), years: str(e.years, 30), gpa: str(e.gpa, 20) }));
+  const seen = new Set();
+  r.skills = arr(raw.skills, 30).map(s => ({ id: uid(), name: str(s.name, 40).trim(), level: clamp(Math.round(Number(s.level)) || 0, 0, 100) }))
+    .filter(s => s.name && !seen.has(s.name.toLowerCase()) && seen.add(s.name.toLowerCase()));
+  r.languages = arr(raw.languages, 20).map(l => ({ id: uid(), name: str(l.name, 50), level: PROFICIENCY.indexOf(l.level) >= 0 ? l.level : 'Fluent' }));
+  r.projects = arr(raw.projects, 20).map(x => ({ id: uid(), name: str(x.name, 100), link: str(x.link, 120), description: str(x.description, 400) }));
+  r.certifications = arr(raw.certifications, 30).map(c => ({ id: uid(), name: str(c.name, 100), issuer: str(c.issuer, 100), year: str(c.year, 20) }));
+  return r;
+}
+
+const T = s => String(s == null ? '' : s).trim();
+function hasContent(r) {
+  const p = r.personal;
+  return !!(Object.keys(p).some(k => T(p[k])) || T(r.summary) ||
+    ['experience', 'education', 'skills', 'languages', 'projects', 'certifications'].some(k => r[k].length));
+}
+
+/* Gmail validation: name@gmail.com (or googlemail.com), no leading/trailing/double dots. */
+const GMAIL_RE = /^[a-z0-9](?:[a-z0-9._+-]*[a-z0-9])?@(?:gmail|googlemail)\.com$/i;
+function emailProblem(v) {
+  v = T(v);
+  if (!v) return '';
+  return (GMAIL_RE.test(v) && v.indexOf('..') < 0) ? '' : 'Enter a valid Gmail address, like name@gmail.com';
+}
+function phoneProblem(v) {
+  v = T(v);
+  if (!v) return '';
+  if (!/^\+?[\d ]+$/.test(v)) return 'Use digits, spaces and an optional leading +';
+  return v.replace(/\D/g, '').length < 6 ? 'That phone number looks too short' : '';
+}
+function setFieldMsg(input, msgEl, problem, okText) {
+  const empty = !T(input.value);
+  if (problem) { input.setAttribute('aria-invalid', 'true'); msgEl.textContent = problem; msgEl.classList.remove('ok'); }
+  else {
+    input.removeAttribute('aria-invalid');
+    msgEl.textContent = empty ? '' : okText;
+    msgEl.classList.toggle('ok', !empty);
+  }
+}
+
+/* =====================================================================
+   9. RESUME BUILDER — forms, repeatable entries, skills, animations
+   ===================================================================== */
+let state = defaultResume();
+let dashReady = false;
+let previewZoom = 'fit';
+
+const SCHEMA = {
+  experience: {
+    noun: 'Position', titleKey: 'role',
+    make: () => ({ id: uid(), role: '', company: '', start: '', end: '', current: false, bullets: '' }),
+    fields: [
+      { k: 'role', label: 'Role', ph: 'Senior Product Designer', max: 100 },
+      { k: 'company', label: 'Company', ph: 'Northwind Labs', max: 100 },
+      { k: 'start', label: 'Start date', ph: 'Mar 2021', max: 30 },
+      { k: 'end', label: 'End date', ph: 'Feb 2024', max: 30, current: true },
+      { k: 'bullets', label: 'Bullet points (one per line)', type: 'textarea', rows: 4, full: true, max: 2000, ph: 'Led the redesign of the analytics workspace\nCut onboarding time by 38%' }
+    ]
+  },
+  education: {
+    noun: 'School', titleKey: 'school',
+    make: () => ({ id: uid(), school: '', degree: '', years: '', gpa: '' }),
+    fields: [
+      { k: 'school', label: 'School', ph: 'University of Gothenburg', max: 100 },
+      { k: 'degree', label: 'Degree', ph: 'BSc Interaction Design', max: 100 },
+      { k: 'years', label: 'Years', ph: '2011 – 2015', max: 30 },
+      { k: 'gpa', label: 'GPA', ph: '3.8 / 4.0', max: 20 }
+    ]
+  },
+  languages: {
+    noun: 'Language', titleKey: 'name',
+    make: () => ({ id: uid(), name: '', level: 'Fluent' }),
+    fields: [
+      { k: 'name', label: 'Language', ph: 'Spanish', max: 50 },
+      { k: 'level', label: 'Proficiency', type: 'select', options: PROFICIENCY }
+    ]
+  },
+  projects: {
+    noun: 'Project', titleKey: 'name',
+    make: () => ({ id: uid(), name: '', link: '', description: '' }),
+    fields: [
+      { k: 'name', label: 'Project name', ph: 'Open-source icon set', max: 100 },
+      { k: 'link', label: 'Link', ph: 'github.com/you/project', max: 120 },
+      { k: 'description', label: 'Description', type: 'textarea', rows: 3, full: true, max: 400, ph: 'What it is and what you achieved' }
+    ]
+  },
+  certifications: {
+    noun: 'Certification', titleKey: 'name',
+    make: () => ({ id: uid(), name: '', issuer: '', year: '' }),
+    fields: [
+      { k: 'name', label: 'Certification', ph: 'NN/g UX Certification', max: 100 },
+      { k: 'issuer', label: 'Issuer', ph: 'Nielsen Norman Group', max: 100 },
+      { k: 'year', label: 'Year', ph: '2022', max: 20 }
+    ]
+  }
+};
+
+function loadResume() {
+  try {
+    const raw = store.get('localStorage', KEY.resume);
+    if (raw) return normalizeResume(JSON.parse(raw));
+  } catch (e) { /* corrupted data → start fresh */ }
+  return defaultResume();
+}
+
+/* ---------- autosave ---------- */
+const saveNow = debounce(() => {
+  const ok = store.set('localStorage', KEY.resume, JSON.stringify(state));
+  setSaveStatus(ok ? 'saved' : 'error');
+}, 450);
+function setSaveStatus(s) {
+  $('#saveStatus').classList.toggle('is-saving', s === 'saving');
+  $('#saveStatus').classList.toggle('is-error', s === 'error');
+  $('#saveText').textContent = s === 'saving' ? 'Saving…' : s === 'error' ? 'Not saved (storage blocked)' :
+    'Saved ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+function changed() { setSaveStatus('saving'); saveNow(); schedulePreview(); updateResumeEmailBtn(); }
+
+/* ---------- list rendering ---------- */
+function fieldHTML(key, it, f) {
+  const id = key + '-' + it.id + '-' + f.k;
+  const val = it[f.k] == null ? '' : it[f.k];
+  let control;
+  if (f.type === 'textarea') {
+    control = '<textarea class="inp" id="' + id + '" data-k="' + f.k + '" rows="' + (f.rows || 3) + '" maxlength="' + f.max + '" placeholder="' + esc(f.ph || '') + '">' + esc(val) + '</textarea>';
+  } else if (f.type === 'select') {
+    control = '<select class="inp" id="' + id + '" data-k="' + f.k + '">' + f.options.map(o => '<option' + (o === val ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select>';
+  } else {
+    control = '<input class="inp" id="' + id + '" data-k="' + f.k + '" maxlength="' + f.max + '" autocomplete="off" placeholder="' + esc(f.ph || '') + '" value="' + esc(val) + '"' + (f.current && it.current ? ' disabled' : '') + '>';
+  }
+  const extra = f.current
+    ? '<label class="check"><input type="checkbox" data-k="current"' + (it.current ? ' checked' : '') + '> I currently work here</label>' : '';
+  return '<div class="field' + (f.full ? ' full' : '') + '"><label for="' + id + '">' + esc(f.label) + '</label>' + control + extra + '</div>';
+}
+
+function ctlHTML(noun, i, n) {
+  return '<span class="entry-ctl">' +
+    '<button type="button" class="btn btn-icon btn-sm" data-act="up" aria-label="Move ' + noun + ' ' + (i + 1) + ' up"' + (i === 0 ? ' disabled' : '') + '>' + ic('up') + '</button>' +
+    '<button type="button" class="btn btn-icon btn-sm" data-act="down" aria-label="Move ' + noun + ' ' + (i + 1) + ' down"' + (i === n - 1 ? ' disabled' : '') + '>' + ic('down') + '</button>' +
+    '<button type="button" class="btn btn-icon btn-sm btn-danger" data-act="remove" aria-label="Remove ' + noun + ' ' + (i + 1) + '">' + ic('trash') + '</button></span>';
+}
+
+function entryHTML(key, it, i, n) {
+  const S = SCHEMA[key];
+  const title = T(it[S.titleKey]) || (S.noun + ' ' + (i + 1));
+  return '<div class="entry" data-id="' + it.id + '" role="group" aria-label="' + S.noun + ' ' + (i + 1) + '">' +
+    '<div class="entry-head"><span class="entry-title" data-title>' + esc(title) + '</span>' + ctlHTML(S.noun, i, n) + '</div>' +
+    '<div class="grid2">' + S.fields.map(f => fieldHTML(key, it, f)).join('') + '</div></div>';
+}
+
+function skillHTML(it, i, n) {
+  const id = 'sk-' + it.id;
+  return '<div class="entry skill-row" data-id="' + it.id + '" role="group" aria-label="Skill ' + esc(it.name) + '">' +
+    '<span class="tag" title="' + esc(it.name) + '">' + esc(it.name) + '</span>' +
+    '<span class="range-wrap"><label class="sr-only" for="' + id + '">' + esc(it.name) + ' level, 0 to 100</label>' +
+    '<input type="range" class="range" id="' + id + '" min="0" max="100" step="1" value="' + it.level + '" aria-valuetext="' + it.level + ' out of 100" style="--p:' + it.level + '%">' +
+    '<output class="skill-val" for="' + id + '">' + it.level + '%</output></span>' +
+    ctlHTML('skill', i, n) + '</div>';
+}
+
+function renderList(key) {
+  const host = $('[data-list="' + key + '"]'), items = state[key];
+  host.innerHTML = items.map((it, i) => key === 'skills' ? skillHTML(it, i, items.length) : entryHTML(key, it, i, items.length)).join('');
+  $('[data-empty="' + key + '"]').hidden = items.length > 0;
+}
+
+const animateOut = el => new Promise(res => {
+  if (!el || reduceMotion) { res(); return; }
+  gsap.to(el, { opacity: 0, x: 40, scale: 0.96, duration: 0.25, ease: 'power2.in', onComplete: res });
+});
+
+/* Runs a change to a list, re-renders it and animates the result (FLIP-style slide for the others). */
+function listOp(key, mutate, opt) {
+  opt = opt || {};
+  const host = $('[data-list="' + key + '"]');
+  const before = new Map($$('.entry', host).map(el => [el.dataset.id, el.getBoundingClientRect().top]));
+  mutate();
+  renderList(key);
+  $$('.entry', host).forEach(el => {
+    const id = el.dataset.id;
+    if (reduceMotion) return;
+    if (before.has(id)) {
+      const dy = before.get(id) - el.getBoundingClientRect().top;
+      if (Math.abs(dy) > 1) gsap.fromTo(el, { y: dy }, { y: 0, duration: 0.5, ease: 'power3.out', clearProps: 'transform' });
+    } else {
+      gsap.fromTo(el, { opacity: 0, y: -18, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: 'back.out(1.4)', clearProps: 'transform,opacity' });
+    }
+  });
+  if (opt.enterId) {
+    const fresh = host.querySelector('[data-id="' + opt.enterId + '"]');
+    if (fresh) {
+      fresh.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+      if (opt.focus) { const f = fresh.querySelector('input:not([type=checkbox]),textarea,select'); if (f) f.focus({ preventScroll: true }); }
+    }
+  }
+  if (opt.focusId) {
+    const row = host.querySelector('[data-id="' + opt.focusId + '"]');
+    if (row) {
+      let b = row.querySelector('[data-act="' + opt.focusAct + '"]');
+      if (!b || b.disabled) b = row.querySelector('[data-act="' + (opt.focusAct === 'up' ? 'down' : 'up') + '"]');
+      if (b && !b.disabled) b.focus({ preventScroll: true });
+    }
+  }
+  changed();
+}
+
+function addEntry(key) {
+  const it = SCHEMA[key].make();
+  listOp(key, () => state[key].push(it), { enterId: it.id, focus: true });
+}
+function moveEntry(key, id, dir) {
+  const arr = state[key], i = arr.findIndex(x => x.id === id), j = i + dir;
+  if (i < 0 || j < 0 || j >= arr.length) return;
+  listOp(key, () => { const t = arr[i]; arr[i] = arr[j]; arr[j] = t; }, { focusId: id, focusAct: dir < 0 ? 'up' : 'down' });
+}
+async function removeEntry(key, id) {
+  await animateOut($('[data-list="' + key + '"] [data-id="' + id + '"]'));
+  listOp(key, () => { state[key] = state[key].filter(x => x.id !== id); });
+}
+
+/* ---------- skills ---------- */
+function addSkill() {
+  const inp = $('#skillInput'), msg = $('#m-skill');
+  const name = inp.value.trim().replace(/\s+/g, ' ');
+  const fail = text => { msg.textContent = text; inp.setAttribute('aria-invalid', 'true'); inp.focus(); };
+  if (!name) return fail('Type a skill name first.');
+  if (state.skills.some(s => s.name.toLowerCase() === name.toLowerCase())) return fail('“' + name + '” is already in your list.');
+  if (state.skills.length >= 30) return fail('You can add up to 30 skills.');
+  msg.textContent = ''; inp.removeAttribute('aria-invalid'); inp.value = '';
+  const it = { id: uid(), name: name, level: 70 };
+  listOp('skills', () => state.skills.push(it), { enterId: it.id });
+  const range = $('[data-list="skills"] [data-id="' + it.id + '"] .range');
+  if (range) gsap.fromTo(range, { '--p': '0%' }, { '--p': it.level + '%', duration: 0.9, ease: 'power3.out' });   // animated progress fill
+  inp.focus();
+}
+
+/* ---------- section collapse ---------- */
+function toggleSection(btn) {
+  const body = $('#' + btn.getAttribute('aria-controls')), name = btn.closest('.sec').querySelector('h2').textContent;
+  const open = btn.getAttribute('aria-expanded') === 'true';
+  btn.setAttribute('aria-expanded', String(!open));
+  btn.setAttribute('aria-label', (open ? 'Expand ' : 'Collapse ') + name);
+  body.style.overflow = 'hidden';                                // clip only while animating
+  if (open) {
+    gsap.to(body, { height: 0, opacity: 0, duration: D(0.35), ease: 'power2.inOut', onComplete: () => { body.hidden = true; gsap.set(body, { clearProps: 'height,opacity' }); body.style.overflow = ''; } });
+  } else {
+    body.hidden = false;
+    gsap.fromTo(body, { height: 0, opacity: 0 }, { height: 'auto', opacity: 1, duration: D(0.4), ease: 'power2.out', clearProps: 'height,opacity', onComplete: () => { body.style.overflow = ''; } });
+  }
+}
+
+/* ---------- personal info ---------- */
+function sanitizePhone(inp) {
+  const raw = inp.value;
+  const v = raw.replace(/[^\d+\s]/g, '').replace(/(?!^)\+/g, '');
+  if (v === raw) return false;
+  const pos = (inp.selectionStart || raw.length) - (raw.length - v.length);
+  inp.value = v;
+  try { inp.setSelectionRange(pos, pos); } catch (e) { /* not supported */ }
+  return true;
+}
+function validateEmailUI() { const i = $('#f-email'); setFieldMsg(i, $('#m-email'), emailProblem(i.value), '✓ Valid Gmail address'); }
+function validatePhoneUI() { const i = $('#f-phone'); setFieldMsg(i, $('#m-phone'), phoneProblem(i.value), '✓ Looks good'); }
+
+function updateSummaryCount() { $('#summaryCount').textContent = $('#f-summary').value.length + ' / 900'; }
+
+function onFormInput(e) {
+  const t = e.target;
+  if (t.dataset.p) {
+    const k = t.dataset.p;
+    let stripped = false;
+    if (k === 'phone') stripped = sanitizePhone(t);
+    state.personal[k] = t.value;
+    if (k === 'email') validateEmailUI();
+    if (k === 'phone') {
+      validatePhoneUI();
+      if (stripped) { $('#m-phone').textContent = 'Only digits, spaces and + are allowed'; $('#m-phone').classList.remove('ok'); }
+    }
+    return changed();
+  }
+  if (t.id === 'f-summary') { state.summary = t.value; updateSummaryCount(); return changed(); }
+  const entry = t.closest('.entry'), host = t.closest('[data-list]');
+  if (!entry || !host) return;
+  const key = host.dataset.list, it = state[key].find(x => x.id === entry.dataset.id);
+  if (!it) return;
+  if (t.classList.contains('range')) {
+    it.level = +t.value;
+    t.style.setProperty('--p', it.level + '%');
+    t.setAttribute('aria-valuetext', it.level + ' out of 100');
+    $('.skill-val', entry).textContent = it.level + '%';
+    return changed();
+  }
+  const k = t.dataset.k;
+  if (!k) return;
+  it[k] = t.type === 'checkbox' ? t.checked : t.value;
+  if (k === 'current') { const end = $('[data-k="end"]', entry); if (end) end.disabled = t.checked; }
+  const S = SCHEMA[key];
+  if (S && k === S.titleKey) { const idx = state[key].indexOf(it); $('[data-title]', entry).textContent = T(it[k]) || (S.noun + ' ' + (idx + 1)); }
+  changed();
+}
+
+function onFormClick(e) {
+  const add = e.target.closest('[data-add]');
+  if (add) return addEntry(add.dataset.add);
+  const tog = e.target.closest('.sec-toggle');
+  if (tog) return toggleSection(tog);
+  const act = e.target.closest('[data-act]');
+  if (!act || act.disabled) return;
+  const entry = act.closest('.entry'), host = act.closest('[data-list]');
+  if (!entry || !host) return;
+  const key = host.dataset.list, id = entry.dataset.id;
+  if (act.dataset.act === 'up') moveEntry(key, id, -1);
+  else if (act.dataset.act === 'down') moveEntry(key, id, 1);
+  else if (act.dataset.act === 'remove') removeEntry(key, id);
+}
+
+function buildPickers() {
+  $('#themes').innerHTML = THEMES.map(t => '<button type="button" class="theme-btn" data-theme="' + t.id + '" aria-pressed="false"><span class="theme-thumb th-' + t.id + '" aria-hidden="true"></span>' + t.name + '</button>').join('');
+  $('#accents').innerHTML = ACCENTS.map(a => '<button type="button" class="swatch" data-accent="' + a.hex + '" style="--c:' + a.hex + '" aria-pressed="false" aria-label="' + a.name + ' accent colour"></button>').join('');
+}
+function syncPickers() {
+  $$('#themes .theme-btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === state.theme)));
+  $$('#accents .swatch').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.accent === state.accent)));
+}
+
+/* Writes the current state into every form control (used on start, sample, reset, import). */
+function hydrateForm() {
+  $$('[data-p]').forEach(inp => { inp.value = state.personal[inp.dataset.p] || ''; });
+  $('#f-summary').value = state.summary;
+  updateSummaryCount();
+  Object.keys(SCHEMA).concat('skills').forEach(renderList);
+  validateEmailUI(); validatePhoneUI();
+  syncPickers();
+  updateResumeEmailBtn();
+}
+
+function bindBuilder() {
+  const form = $('#resumeForm');
+  form.addEventListener('input', onFormInput);
+  form.addEventListener('click', onFormClick);
+  form.addEventListener('submit', e => e.preventDefault());
+  $('#skillAddBtn').addEventListener('click', addSkill);
+  $('#skillInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addSkill(); } });
+  $('#skillInput').addEventListener('input', () => { $('#m-skill').textContent = ''; $('#skillInput').removeAttribute('aria-invalid'); });
+
+  $('#themes').addEventListener('click', e => {
+    const b = e.target.closest('[data-theme]'); if (!b) return;
+    state.theme = b.dataset.theme; syncPickers(); changed();
+    gsap.fromTo('#paper', { opacity: 0.35, y: 10 }, { opacity: 1, y: 0, duration: D(0.45), ease: 'power3.out', clearProps: 'transform,opacity' });
+  });
+  $('#accents').addEventListener('click', e => {
+    const b = e.target.closest('[data-accent]'); if (!b) return;
+    state.accent = b.dataset.accent; syncPickers(); changed();
+  });
+  $('#zoomSeg').addEventListener('click', e => {
+    const b = e.target.closest('[data-zoom]'); if (!b) return;
+    previewZoom = b.dataset.zoom;
+    $$('#zoomSeg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    fitPaper();
+  });
+  $('#paneSwitch').addEventListener('click', e => {
+    const b = e.target.closest('[data-pane]'); if (!b) return;
+    $('#builder').dataset.pane = b.dataset.pane;
+    $$('#paneSwitch button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    window.scrollTo(0, 0);
+    requestAnimationFrame(fitPaper);
+  });
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(() => fitPaper());
+    ro.observe($('#paperViewport')); ro.observe($('#paper'));
+  }
+  window.addEventListener('resize', debounce(fitPaper, 100));
+}
+
+/* =====================================================================
+   10. PREVIEW · PRINT · EXPORT / IMPORT · EMAIL
+   ===================================================================== */
+const bulletsOf = text => String(text || '').split(/\r?\n/).map(s => s.replace(/^\s*[-•*–—·]+\s*/, '').trim()).filter(Boolean);
+function hrefOf(raw) {
+  const v = T(raw);
+  if (/^https?:\/\/[^\s<>"']+$/i.test(v)) return v;
+  if (/^[\w-]+(\.[\w-]+)+(\/[^\s<>"']*)?$/i.test(v)) return 'https://' + v;
+  return '';
+}
+function datesText(e) {
+  const s = T(e.start), en = e.current ? 'Present' : T(e.end);
+  return s && en ? s + ' – ' + en : (s || en);
+}
+
+/* Builds the resume markup. Everything user-typed goes through esc(). */
+function resumeHTML(r, o) {
+  o = o || {};
+  const ph = !!o.placeholders, links = !!o.links, p = r.personal;
+  const holder = text => (ph ? '<span class="ph">' + esc(text) + '</span>' : '');
+  const linkTxt = v => { const t = T(v); const h = links ? hrefOf(t) : ''; return h ? '<a href="' + esc(h) + '">' + esc(t) + '</a>' : esc(t); };
+  const sec = (cls, title, inner) => '<section class="rs-sec ' + cls + '"><h2>' + title + '</h2>' + inner + '</section>';
+
+  const contact = [p.email, p.phone, p.location].filter(T).map(v => '<li>' + esc(T(v)) + '</li>')
+    .concat([p.linkedin, p.portfolio].filter(T).map(v => '<li>' + linkTxt(v) + '</li>'));
+  let html = '<header class="rs-head"><h1 class="rs-name">' + (T(p.name) ? esc(T(p.name)) : holder('Your Name')) + '</h1>' +
+    '<p class="rs-title">' + (T(p.title) ? esc(T(p.title)) : holder('Job title')) + '</p>' +
+    '<ul class="rs-contact">' + (contact.length ? contact.join('') : (ph ? '<li>' + holder('you@gmail.com · +1 555 000 0000 · City, Country') + '</li>' : '')) + '</ul></header><div class="rs-body">';
+
+  let body = '';
+  if (T(r.summary)) body += sec('rs-summary', 'Profile', '<p>' + esc(T(r.summary)).replace(/\n/g, '<br>') + '</p>');
+
+  const exp = r.experience.filter(e => T(e.role) || T(e.company) || T(e.bullets) || T(e.start) || T(e.end) || e.current);
+  if (exp.length) body += sec('rs-exp', 'Experience', exp.map(e => {
+    const head = T(e.role) || T(e.company), org = T(e.role) ? T(e.company) : '', bl = bulletsOf(e.bullets);
+    return '<div class="rs-item"><div class="rs-row"><span class="rs-role">' + esc(head) + '</span><span class="rs-dates">' + esc(datesText(e)) + '</span></div>' +
+      (org ? '<div class="rs-org">' + esc(org) + '</div>' : '') +
+      (bl.length ? '<ul>' + bl.map(b => '<li>' + esc(b) + '</li>').join('') + '</ul>' : '') + '</div>';
+  }).join(''));
+
+  const edu = r.education.filter(e => T(e.school) || T(e.degree) || T(e.years) || T(e.gpa));
+  if (edu.length) body += sec('rs-edu', 'Education', edu.map(e => {
+    const head = T(e.degree) || T(e.school);
+    const sub = [T(e.degree) ? T(e.school) : '', T(e.gpa) ? 'GPA ' + T(e.gpa) : ''].filter(Boolean).join(' · ');
+    return '<div class="rs-item"><div class="rs-row"><span class="rs-role">' + esc(head) + '</span><span class="rs-dates">' + esc(T(e.years)) + '</span></div>' + (sub ? '<div class="rs-org">' + esc(sub) + '</div>' : '') + '</div>';
+  }).join(''));
+
+  const prj = r.projects.filter(x => T(x.name) || T(x.description) || T(x.link));
+  if (prj.length) body += sec('rs-prj', 'Projects', prj.map(x =>
+    '<div class="rs-item"><div class="rs-row"><span class="rs-role">' + esc(T(x.name)) + '</span>' + (T(x.link) ? '<span class="rs-dates">' + linkTxt(x.link) + '</span>' : '') + '</div>' +
+    (T(x.description) ? '<p class="rs-desc">' + esc(T(x.description)) + '</p>' : '') + '</div>').join(''));
+
+  if (r.skills.length) body += sec('rs-skl', 'Skills', '<ul class="rs-skills">' + r.skills.map(s =>
+    '<li class="rs-skill"><div class="rs-skill-name"><span>' + esc(s.name) + '</span><em>' + s.level + '%</em></div><span class="bar"><b data-id="' + s.id + '" data-v="' + s.level + '" style="width:' + s.level + '%"></b></span></li>').join('') + '</ul>');
+
+  const lng = r.languages.filter(l => T(l.name));
+  if (lng.length) body += sec('rs-lng', 'Languages', '<ul class="rs-chips">' + lng.map(l => '<li>' + esc(T(l.name)) + ' <em>· ' + esc(l.level) + '</em></li>').join('') + '</ul>');
+
+  const crt = r.certifications.filter(c => T(c.name) || T(c.issuer) || T(c.year));
+  if (crt.length) body += sec('rs-crt', 'Certifications', crt.map(c =>
+    '<div class="rs-row rs-cert"><span><span class="rs-role">' + esc(T(c.name)) + '</span>' + (T(c.issuer) ? ' · ' + esc(T(c.issuer)) : '') + '</span><span class="rs-dates">' + esc(T(c.year)) + '</span></div>').join(''));
+
+  if (!body && ph) body = '<section class="rs-sec"><p class="ph">Your resume appears here as you type. Press “Fill sample” to see a complete example.</p></section>';
+  return html + body + '</div>';
+}
+
+/* Plain-text version used for "Email to my Gmail" and "Copy text". */
+function resumeText(r) {
+  const p = r.personal, out = [];
+  if (T(p.name)) out.push(T(p.name).toUpperCase());
+  if (T(p.title)) out.push(T(p.title));
+  const contact = [p.email, p.phone, p.location, p.linkedin, p.portfolio].map(T).filter(Boolean).join('  |  ');
+  if (contact) out.push(contact);
+  const section = (title, lines) => { if (lines.length) out.push('', title, '-'.repeat(title.length), ...lines); };
+  if (T(r.summary)) section('PROFESSIONAL SUMMARY', [T(r.summary)]);
+  section('WORK EXPERIENCE', [].concat(...r.experience.filter(e => T(e.role) || T(e.company) || T(e.bullets)).map(e => {
+    const head = [T(e.role), T(e.company)].filter(Boolean).join(' — '), d = datesText(e);
+    return [head + (d ? '  (' + d + ')' : '')].concat(bulletsOf(e.bullets).map(b => '  • ' + b), ['']);
+  })).slice(0, -1));
+  section('EDUCATION', r.education.filter(e => T(e.school) || T(e.degree)).map(e =>
+    [T(e.degree), T(e.school)].filter(Boolean).join(' — ') + (T(e.years) ? '  (' + T(e.years) + ')' : '') + (T(e.gpa) ? '  GPA: ' + T(e.gpa) : '')));
+  section('PROJECTS', [].concat(...r.projects.filter(x => T(x.name)).map(x =>
+    [T(x.name) + (T(x.link) ? '  ' + T(x.link) : '')].concat(T(x.description) ? ['  ' + T(x.description)] : []))));
+  if (r.skills.length) section('SKILLS', [r.skills.map(s => s.name + ' (' + s.level + '/100)').join(', ')]);
+  section('LANGUAGES', r.languages.filter(l => T(l.name)).map(l => T(l.name) + ' — ' + l.level));
+  section('CERTIFICATIONS', r.certifications.filter(c => T(c.name)).map(c => T(c.name) + (T(c.issuer) ? ' — ' + T(c.issuer) : '') + (T(c.year) ? ' (' + T(c.year) + ')' : '')));
+  return out.join('\n');
+}
+
+/* ---------- live preview ---------- */
+const lastBars = new Map();
+let previewQueued = false;
+function schedulePreview() {                                    // coalesces bursts of keystrokes into one render
+  if (previewQueued) return;
+  previewQueued = true;
+  setTimeout(() => { previewQueued = false; renderPreview(); }, 16);
+}
+function renderPreview() {
+  const paper = $('#paper');
+  paper.className = 'rs-paper t-' + state.theme;
+  paper.style.setProperty('--ra', state.accent);
+  paper.innerHTML = resumeHTML(state, { placeholders: true });
+  const bars = $$('.bar b[data-id]', paper);                    // animated skill bars: grow from their previous value
+  bars.forEach(b => { b.style.width = (lastBars.has(b.dataset.id) ? lastBars.get(b.dataset.id) : 0) + '%'; });
+  void paper.offsetWidth;
+  requestAnimationFrame(() => bars.forEach(b => { lastBars.set(b.dataset.id, +b.dataset.v); b.style.width = b.dataset.v + '%'; }));
+  fitPaper();
+}
+function fitPaper() {
+  const vp = $('#paperViewport'), sizer = $('#paperSizer'), paper = $('#paper');
+  if (!vp || !paper) return;
+  const cs = getComputedStyle(vp), avail = vp.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  if (avail <= 0) return;
+  const s = previewZoom === 'fit' ? Math.min(1, avail / 794) : 1;
+  paper.style.transform = 'scale(' + s + ')';
+  sizer.style.width = Math.round(794 * s) + 'px';
+  sizer.style.height = Math.round(paper.offsetHeight * s) + 'px';
+}
+
+/* ---------- print / PDF ---------- */
+function buildPrintSheet() {
+  $('#printSheet').innerHTML = '<table class="print-table"><thead><tr><td class="pg-sp"></td></tr></thead><tbody><tr><td>' +
+    '<article class="rs-paper t-' + state.theme + '" style="--ra:' + state.accent + '">' + resumeHTML(state, { links: true }) + '</article>' +
+    '</td></tr></tbody><tfoot><tr><td class="pg-sp"></td></tr></tfoot></table>';
+}
+const baseTitle = document.title;
+window.addEventListener('beforeprint', () => {                  // also covers Ctrl/Cmd+P
+  buildPrintSheet();
+  document.title = 'Resume' + (T(state.personal.name) ? ' – ' + T(state.personal.name) : '');
+});
+window.addEventListener('afterprint', () => { document.title = baseTitle; $('#printSheet').innerHTML = ''; });
+
+function printResume() {
+  if (!hasContent(state)) { toast('Your resume is empty — add some details first.', 'warn'); return; }
+  toast('In the print dialog choose “Save as PDF” as the destination.', 'info', 5000);
+  setTimeout(() => window.print(), 250);
+}
+
+/* ---------- mailto helper (an anchor click keeps file:// pages happy) ---------- */
+function openMailto(url) {
+  const a = document.createElement('a');
+  a.href = url; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function emailResume() {
+  const email = T(state.personal.email), problem = emailProblem(email);
+  if (!email || problem) {
+    if ($('#builder').dataset.pane === 'preview') $('#paneSwitch [data-pane="edit"]').click();
+    const f = $('#f-email');
+    setFieldMsg(f, $('#m-email'), problem || 'Add your Gmail address first', '');
+    const sec = $('[data-sec="personal"]');
+    if ($('#b-personal').hidden) toggleSection($('[aria-controls="b-personal"]'));
+    sec.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+    f.focus({ preventScroll: true });
+    toast('Enter a valid Gmail address in Personal info to email your resume.', 'error');
+    return;
+  }
+  if (!hasContent(state)) { toast('Your resume is empty — add some details first.', 'warn'); return; }
+  const subject = 'My resume' + (T(state.personal.name) ? ' – ' + T(state.personal.name) : '');
+  const base = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=';
+  const LIMIT = 6000, note = '\n\n[…trimmed to fit an email link. Use “Download as PDF” or “Export JSON” for the full resume.]';
+  let body = resumeText(state), trimmed = false;
+  while ((base + encodeURIComponent(body)).length > LIMIT) { trimmed = true; body = body.slice(0, Math.floor(body.length * 0.9)); }
+  if (trimmed) body += note;
+  openMailto(base + encodeURIComponent(body));
+  toast(trimmed ? 'Opening your email app (resume text was trimmed to fit).' : 'Opening an email draft to ' + email + '…', 'ok');
+}
+
+async function copyText() {
+  if (!hasContent(state)) { toast('Your resume is empty — add some details first.', 'warn'); return; }
+  const text = resumeText(state);
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;left:-9999px';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (err) { /* ignore */ }
+    ta.remove();
+    if (!ok) { toast('Your browser blocked copying. Use Email or PDF instead.', 'error'); return; }
+  }
+  toast('Resume text copied to the clipboard.', 'ok');
+}
+
+/* ---------- JSON export / import ---------- */
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+function exportJSON() {
+  const payload = { app: 'resume-studio', version: 1, exportedAt: new Date().toISOString(), resume: state };
+  const name = 'resume-' + (slug(state.personal.name) || 'draft') + '-' + new Date().toISOString().slice(0, 10) + '.json';
+  downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }), name);
+  toast('Exported ' + name, 'ok');
+}
+function applyState(next) {
+  state = next;
+  hydrateForm();
+  renderPreview();
+  setSaveStatus('saving'); saveNow();
+  enterView($('#resumeForm'));
+}
+async function importJSON(file) {
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { toast('That file is too large to be a resume export (max 2 MB).', 'error'); return; }
+  let data;
+  try { data = JSON.parse(await file.text()); }
+  catch (e) { toast('That file isn’t valid JSON, so it couldn’t be imported.', 'error'); return; }
+  const src = data && typeof data === 'object' && data.resume && typeof data.resume === 'object' ? data.resume : data;
+  if (!src || typeof src !== 'object' || Array.isArray(src) || !(src.personal || src.experience || src.skills || src.summary)) {
+    toast('This doesn’t look like a Resume Studio export.', 'error'); return;
+  }
+  if (hasContent(state) && !(await confirmDialog({ title: 'Replace your current resume?', text: 'Importing “' + file.name + '” will overwrite what you have now. Export first if you want a backup.', ok: 'Replace it' }))) return;
+  applyState(normalizeResume(src));
+  toast('Resume imported from ' + file.name, 'ok');
+}
+
+function bindToolbar() {
+  $('#btnPdf').addEventListener('click', printResume);
+  $('#btnEmail').addEventListener('click', emailResume);
+  $('#btnCopy').addEventListener('click', copyText);
+  $('#btnExport').addEventListener('click', exportJSON);
+  $('#btnImport').addEventListener('click', () => $('#importInput').click());
+  $('#importInput').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; importJSON(f); });
+  $('#btnSample').addEventListener('click', async () => {
+    if (hasContent(state) && !(await confirmDialog({ title: 'Replace with sample data?', text: 'Your current entries will be replaced by an example resume.', ok: 'Use sample' }))) return;
+    const s = normalizeResume(SAMPLE); s.theme = state.theme; s.accent = state.accent;
+    applyState(s); toast('Sample resume loaded — edit anything you like.', 'ok');
+  });
+  $('#btnReset').addEventListener('click', async () => {
+    if (!hasContent(state)) { toast('Nothing to reset — the resume is already empty.', 'info'); return; }
+    if (!(await confirmDialog({ title: 'Clear the whole resume?', text: 'All sections will be emptied. This cannot be undone — export a JSON backup first if you might need it.', ok: 'Clear everything' }))) return;
+    const s = defaultResume(); s.theme = state.theme; s.accent = state.accent;
+    lastBars.clear(); applyState(s); toast('Resume cleared.', 'ok');
+  });
+}
+
+/* =====================================================================
+   11. UPLOAD A PICTURE — validate, compress (canvas), store (IndexedDB), zoom / fullscreen
+   ===================================================================== */
+
+/* Tiny promise wrapper around IndexedDB (one key-value store). */
+const idb = {
+  db: null,
+  open() {
+    return new Promise((res, rej) => {
+      if (!window.indexedDB) { rej(new Error('IndexedDB unavailable')); return; }
+      const r = indexedDB.open(DB_CFG.name, 1);
+      r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains(DB_CFG.store)) r.result.createObjectStore(DB_CFG.store); };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+      r.onblocked = () => rej(new Error('IndexedDB blocked'));
+    });
+  },
+  async run(mode, fn) {
+    if (!this.db) this.db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = this.db.transaction(DB_CFG.store, mode), req = fn(tx.objectStore(DB_CFG.store));
+      tx.oncomplete = () => res(req ? req.result : undefined);
+      tx.onerror = tx.onabort = () => rej(tx.error || new Error('Transaction failed'));
+    });
+  },
+  get(k) { return this.run('readonly', s => s.get(k)); },
+  put(k, v) { return this.run('readwrite', s => s.put(v, k)); },
+  del(k) { return this.run('readwrite', s => s.delete(k)); }
+};
+
+/* The saved record: the (compressed) picture + the Gmail address typed next to it. */
+let rec = { blob: null, name: '', type: '', width: 0, height: 0, size: 0, originalSize: 0, email: '', savedAt: 0 };
+let imgUrl = '', persistWarned = false;
+const up = {};
+let viewZoom = null, lbZoom = null, lbPrevFocus = null;
+
+async function persist() {
+  try { await idb.put(DB_CFG.key, rec); return true; }
+  catch (e) {
+    if (!persistWarned) {
+      persistWarned = true;
+      toast(e && e.name === 'QuotaExceededError'
+        ? 'Browser storage is full, so the picture is only kept until you close this tab.'
+        : 'Your browser blocked saving the picture; it is only kept until you close this tab.', 'warn');
+    }
+    return false;
+  }
+}
+const persistSoon = debounce(persist, 400);
+
+/* ---------- messages / busy state ---------- */
+function showUpError(msg) {
+  $('#upErrorText').textContent = msg;
+  const el = $('#upError');
+  el.hidden = false;
+  gsap.fromTo(el, { y: -8, opacity: 0 }, { y: 0, opacity: 1, duration: D(0.3), ease: 'power2.out', clearProps: 'transform,opacity' });
+}
+function clearUpError() { $('#upError').hidden = true; }
+function setBusy(on) { (up.card.hidden ? $('#busy') : $('#busy2')).hidden = !on; if (!on) { $('#busy').hidden = true; $('#busy2').hidden = true; } }
+
+/* ---------- image processing ---------- */
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => resolve({ im: im, url: url });
+    im.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode')); };
+    im.src = url;
+  });
+}
+/* Scales anything wider than 1600px down on a canvas; small images are kept as they are. */
+async function compressImage(file) {
+  const loaded = await loadImage(file);
+  try {
+    const im = loaded.im, w0 = im.naturalWidth, h0 = im.naturalHeight;
+    if (!w0 || !h0) throw new Error('decode');
+    const scale = Math.min(1, IMG_CFG.maxWidth / w0, IMG_CFG.maxHeight / h0);
+    if (scale === 1 && file.size <= IMG_CFG.keepBytes) return { blob: file, width: w0, height: h0, type: file.type || 'image/png' };
+    const w = Math.max(1, Math.round(w0 * scale)), h = Math.max(1, Math.round(h0 * scale));
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    /* We draw once and read the pixels straight back, so a CPU-backed canvas is the fast path
+       (a GPU canvas needs a slow read-back, which can take seconds on machines without a real GPU). */
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);             // flatten transparency to white
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(im, 0, 0, w, h);
+    const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', IMG_CFG.quality));
+    if (!blob) throw new Error('encode');
+    if (scale === 1 && blob.size >= file.size) return { blob: file, width: w0, height: h0, type: file.type || 'image/png' };
+    return { blob: blob, width: w, height: h, type: 'image/jpeg' };
+  } finally { URL.revokeObjectURL(loaded.url); }
+}
+
+async function handleFile(file) {
+  if (!file) return;
+  clearUpError();
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  const typeOk = IMG_CFG.types.indexOf(file.type) >= 0 || (!file.type && IMG_CFG.exts.indexOf(ext) >= 0);
+  if (!typeOk) {
+    const what = ext && ext !== file.name.toLowerCase() ? ext.toUpperCase() : (file.type || 'unknown');
+    showUpError('“' + file.name + '” can’t be used: ' + what + ' files aren’t supported. Please choose a PNG, JPG or WEBP picture.');
+    return;
+  }
+  if (!file.size) { showUpError('“' + file.name + '” is empty. Please choose another picture.'); return; }
+  if (file.size > IMG_CFG.maxBytes) {
+    showUpError('That picture is ' + fmtBytes(file.size) + ', and the limit is ' + fmtBytes(IMG_CFG.maxBytes) + '. Try a smaller or lower-resolution export.');
+    return;
+  }
+  setBusy(true);
+  try {
+    const out = await compressImage(file);
+    Object.assign(rec, { blob: out.blob, name: file.name, type: out.type, width: out.width, height: out.height, size: out.blob.size, originalSize: file.size, savedAt: Date.now() });
+    const saved = await persist();
+    showImage();
+    const shrunk = out.blob !== file;
+    toast((shrunk ? 'Picture optimised (' + fmtBytes(file.size) + ' → ' + fmtBytes(out.blob.size) + ')' : 'Picture added') + (saved ? ' and saved in this browser.' : '.'), 'ok');
+  } catch (e) {
+    showUpError(e && (e.message === 'decode')
+      ? 'We couldn’t read “' + file.name + '”. It may be damaged — please try another picture.'
+      : 'Something went wrong while processing the picture. Please try again.');
+  } finally { setBusy(false); }
+}
+
+/* ---------- show / hide the viewer ---------- */
+const imageFileName = () => (slug(rec.name.replace(/\.[^.]+$/, '')) || 'resume-picture') + '.' + (rec.type === 'image/png' ? 'png' : rec.type === 'image/webp' ? 'webp' : 'jpg');
+
+function fillMeta() {
+  $('#imgMeta').hidden = false;
+  $('#mName').textContent = rec.name;
+  $('#mSize').textContent = fmtBytes(rec.size) + (rec.originalSize && rec.originalSize !== rec.size ? ' (was ' + fmtBytes(rec.originalSize) + ')' : '');
+  $('#mDim').textContent = rec.width + ' × ' + rec.height + ' px';
+  $('#mSaved').textContent = new Date(rec.savedAt || Date.now()).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+}
+function showImage() {
+  if (imgUrl) URL.revokeObjectURL(imgUrl);
+  imgUrl = URL.createObjectURL(rec.blob);
+  const img = $('#viewImg');
+  img.alt = 'Your uploaded resume picture (' + rec.name + ')';
+  img.onload = () => viewZoom.fit();
+  img.src = imgUrl;
+  up.dz.hidden = true; up.card.hidden = false;
+  fillMeta();
+  $('#btnDownloadImg').disabled = false; $('#btnDraftImg').disabled = false;
+  if (emailJSReady()) $('#btnEmailJS').disabled = false;
+  gsap.fromTo(up.card, { opacity: 0, y: 18, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: D(0.5), ease: 'power3.out', clearProps: 'transform,opacity' });
+}
+function showDrop() {
+  if (imgUrl) { URL.revokeObjectURL(imgUrl); imgUrl = ''; }
+  $('#viewImg').removeAttribute('src');
+  up.card.hidden = true; up.dz.hidden = false;
+  $('#imgMeta').hidden = true;
+  $('#btnDownloadImg').disabled = true; $('#btnDraftImg').disabled = true; $('#btnEmailJS').disabled = true;
+  gsap.fromTo(up.dz, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: D(0.45), ease: 'power3.out', clearProps: 'transform,opacity' });
+}
+function uploadShown() { if (viewZoom) { viewZoom.apply(); } }
+
+async function removeImage() {
+  const ok = await confirmDialog({ title: 'Remove this picture?', text: 'It will be deleted from this browser. The Gmail address next to it stays saved.', ok: 'Remove picture' });
+  if (!ok) return;
+  Object.assign(rec, { blob: null, name: '', type: '', width: 0, height: 0, size: 0, originalSize: 0, savedAt: 0 });
+  await persist();
+  closeLightbox();
+  showDrop();
+  toast('Picture removed.', 'ok');
+}
+
+/* ---------- download / email ---------- */
+function downloadImage() { if (rec.blob) downloadBlob(rec.blob, imageFileName()); }
+
+function validUpEmail() {
+  const e = T(rec.email), p = emailProblem(e);
+  if (!e || p) {
+    setFieldMsg($('#upEmail'), $('#m-upEmail'), p || 'Enter your Gmail address first', '');
+    $('#upEmail').focus();
+    toast('Enter a valid Gmail address first.', 'error');
+    return '';
+  }
+  return e;
+}
+function downloadAndDraft() {
+  if (!rec.blob) return;
+  const email = validUpEmail();
+  if (!email) return;
+  downloadImage();
+  const file = imageFileName();
+  const url = 'mailto:' + email + '?subject=' + encodeURIComponent('My resume picture') +
+    '&body=' + encodeURIComponent('Resume picture: ' + file + '\n\nAttach the file you just downloaded to this email before sending.\n');
+  setTimeout(() => openMailto(url), 700);
+  toast('Downloaded ' + file + '. Attach it to the email draft that opens.', 'ok', 5500);
+}
+
+/* Optional real sending through EmailJS — see the clearly marked config block near the end of the HTML. */
+const emailJSReady = () => { const c = window.EMAILJS_CONFIG; return !!(c && c.enabled && c.publicKey && c.serviceId && c.templateId); };
+const loadScript = src => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load the EmailJS library')); document.head.appendChild(s); });
+const blobToDataURL = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(b); });
+async function sendWithEmailJS() {
+  if (!rec.blob) return;
+  const email = validUpEmail();
+  if (!email) return;
+  const c = window.EMAILJS_CONFIG, btn = $('#btnEmailJS');
+  btn.disabled = true;
+  try {
+    if (!window.emailjs) await loadScript('https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js');
+    await window.emailjs.send(c.serviceId, c.templateId, {
+      to_email: email, from_name: T(state.personal.name) || 'Resume Studio',
+      message: 'My resume picture (' + imageFileName() + ').', resume_image: await blobToDataURL(rec.blob)
+    }, { publicKey: c.publicKey });
+    toast('Sent! Check ' + email + '.', 'ok');
+  } catch (e) {
+    toast('EmailJS could not send the message' + (e && (e.text || e.message) ? ': ' + (e.text || e.message) : '.'), 'error');
+  } finally { btn.disabled = !rec.blob; }
+}
+
+function updateResumeEmailBtn() {
+  const btn = $('#useResumeEmail');
+  if (!btn) return;
+  const e = T(state.personal.email), show = !!e && !emailProblem(e) && e.toLowerCase() !== T(rec.email).toLowerCase();
+  btn.hidden = !show;
+  if (show) btn.textContent = 'Use ' + e + ' from my resume';
+}
+function validateUpEmailUI() { const i = $('#upEmail'); setFieldMsg(i, $('#m-upEmail'), emailProblem(i.value), '✓ Valid Gmail address'); }
+
+/* ---------- zoom + pan (used inline and in the fullscreen view) ---------- */
+function makeZoomer(o) {
+  const MIN = 0.25, MAX = 5;
+  let z = 1;
+  function base() {
+    const cs = getComputedStyle(o.stage);
+    const pw = o.stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const ph = o.stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    const nw = o.img.naturalWidth || 1, nh = o.img.naturalHeight || 1;
+    if (pw <= 0) return 0;
+    return o.mode === 'contain' ? Math.min(pw, ph * nw / nh) : pw;
+  }
+  function apply() {
+    const b = base();
+    if (!b) return;
+    o.img.style.width = Math.max(40, Math.round(b * z)) + 'px';
+    o.label.textContent = Math.round(z * 100) + '%';
+  }
+  function set(nz) {
+    const st = o.stage, cx = (st.scrollLeft + st.clientWidth / 2) / Math.max(1, st.scrollWidth), cy = (st.scrollTop + st.clientHeight / 2) / Math.max(1, st.scrollHeight);
+    z = clamp(nz, MIN, MAX);
+    apply();
+    st.scrollLeft = cx * st.scrollWidth - st.clientWidth / 2;
+    st.scrollTop = cy * st.scrollHeight - st.clientHeight / 2;
+  }
+  const api = {
+    in() { set(z * 1.25); }, out() { set(z / 1.25); }, apply: apply,
+    fit() { z = 1; apply(); o.stage.scrollLeft = 0; o.stage.scrollTop = 0; },
+    toggle() { if (z > 1.05) api.fit(); else set(2); },
+    get zoom() { return z; }
+  };
+  if (window.ResizeObserver) new ResizeObserver(apply).observe(o.stage);
+  o.stage.addEventListener('wheel', e => { if (!(e.ctrlKey || e.metaKey)) return; e.preventDefault(); if (e.deltaY < 0) api.in(); else api.out(); }, { passive: false });
+  o.stage.addEventListener('dblclick', api.toggle);
+  o.stage.addEventListener('keydown', e => {
+    if (e.key === '+' || e.key === '=') { e.preventDefault(); api.in(); }
+    else if (e.key === '-') { e.preventDefault(); api.out(); }
+    else if (e.key === '0') { e.preventDefault(); api.fit(); }
+  });
+  /* drag to pan */
+  let drag = null;
+  o.stage.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || e.pointerType === 'touch') return;
+    const st = o.stage;
+    if (st.scrollWidth <= st.clientWidth && st.scrollHeight <= st.clientHeight) return;
+    drag = { x: e.clientX, y: e.clientY, l: st.scrollLeft, t: st.scrollTop };
+    st.setPointerCapture(e.pointerId); st.classList.add('is-drag');
+  });
+  o.stage.addEventListener('pointermove', e => { if (!drag) return; o.stage.scrollLeft = drag.l - (e.clientX - drag.x); o.stage.scrollTop = drag.t - (e.clientY - drag.y); });
+  const end = e => { if (!drag) return; drag = null; o.stage.classList.remove('is-drag'); try { o.stage.releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ } };
+  o.stage.addEventListener('pointerup', end); o.stage.addEventListener('pointercancel', end);
+  return api;
+}
+
+/* ---------- fullscreen lightbox ---------- */
+function openLightbox() {
+  if (!imgUrl) return;
+  const lb = $('#lightbox'), img = $('#lbImg');
+  lbPrevFocus = document.activeElement;
+  $('#lbTitle').textContent = rec.name || 'Resume picture';
+  img.src = imgUrl;
+  lb.hidden = false;
+  document.body.style.overflow = 'hidden';
+  const fit = () => lbZoom.fit();
+  if (img.complete && img.naturalWidth) fit(); else img.onload = fit;
+  gsap.fromTo(lb, { opacity: 0 }, { opacity: 1, duration: D(0.25) });
+  gsap.fromTo(img, { scale: 0.94, opacity: 0 }, { scale: 1, opacity: 1, duration: D(0.4), ease: 'power3.out', clearProps: 'transform,opacity' });
+  try { if (lb.requestFullscreen) lb.requestFullscreen().catch(() => {}); } catch (e) { /* overlay still works */ }
+  $('#lbClose').focus();
+}
+function closeLightbox() {
+  const lb = $('#lightbox');
+  if (lb.hidden) return;
+  lb.hidden = true;
+  document.body.style.overflow = '';
+  const back = () => { if (lbPrevFocus && lbPrevFocus.focus && document.contains(lbPrevFocus)) lbPrevFocus.focus({ preventScroll: true }); };
+  if (document.fullscreenElement && document.exitFullscreen) {
+    /* Leaving fullscreen is asynchronous and the browser drops focus when it finishes,
+       so give focus back to the button that opened the viewer at that moment too. */
+    const onExit = () => {
+      if (document.fullscreenElement) return;
+      document.removeEventListener('fullscreenchange', onExit);
+      if ($('#lightbox').hidden) back();
+    };
+    document.addEventListener('fullscreenchange', onExit);
+    try { document.exitFullscreen().catch(() => { document.removeEventListener('fullscreenchange', onExit); }); } catch (e) { document.removeEventListener('fullscreenchange', onExit); }
+  }
+  back();
+}
+
+/* ---------- wiring ---------- */
+function initUpload() {
+  up.dz = $('#dropzone'); up.card = $('#viewerCard'); up.main = $('#upMain');
+  const input = $('#imgInput');
+  viewZoom = makeZoomer({ stage: $('#stage'), img: $('#viewImg'), label: $('#zLabel'), mode: 'width' });
+  lbZoom = makeZoomer({ stage: $('#lbStage'), img: $('#lbImg'), label: $('#lbLabel'), mode: 'contain' });
+
+  up.dz.addEventListener('click', () => input.click());
+  up.dz.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+  input.addEventListener('change', () => { const f = input.files[0]; input.value = ''; handleFile(f); });
+
+  /* drag & drop onto the whole upload area */
+  const hasFiles = e => !!e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0;
+  let depth = 0;
+  const hot = on => { up.dz.classList.toggle('is-over', on); up.card.classList.toggle('is-over', on); };
+  up.main.addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); depth++; hot(true); });
+  up.main.addEventListener('dragover', e => { if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+  up.main.addEventListener('dragleave', () => { depth = Math.max(0, depth - 1); if (!depth) hot(false); });
+  up.main.addEventListener('drop', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); depth = 0; hot(false);
+    const files = e.dataTransfer.files;
+    if (files.length > 1) toast('Only one picture at a time, so the first file was used.', 'info');
+    handleFile(files[0]);
+  });
+  /* a missed drop must never navigate away from the app */
+  window.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+  window.addEventListener('drop', e => { if (hasFiles(e)) e.preventDefault(); });
+
+  $('#zIn').addEventListener('click', () => viewZoom.in());
+  $('#zOut').addEventListener('click', () => viewZoom.out());
+  $('#zFit').addEventListener('click', () => viewZoom.fit());
+  $('#btnFull').addEventListener('click', openLightbox);
+  $('#btnReplace').addEventListener('click', () => input.click());
+  $('#btnRemove').addEventListener('click', removeImage);
+  $('#btnDownloadImg').addEventListener('click', () => { downloadImage(); toast('Downloaded ' + imageFileName(), 'ok'); });
+  $('#btnDraftImg').addEventListener('click', downloadAndDraft);
+  $('#btnEmailJS').addEventListener('click', sendWithEmailJS);
+  $('#btnEmailJS').hidden = !emailJSReady();
+
+  $('#lbIn').addEventListener('click', () => lbZoom.in());
+  $('#lbOut').addEventListener('click', () => lbZoom.out());
+  $('#lbFit').addEventListener('click', () => lbZoom.fit());
+  $('#lbClose').addEventListener('click', closeLightbox);
+  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && !$('#lightbox').hidden) closeLightbox(); });
+  document.addEventListener('keydown', e => {
+    const lb = $('#lightbox');
+    if (lb.hidden || !$('#confirm').hidden) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeLightbox(); }
+    else if (e.key === 'Tab') {
+      const f = $$('button:not([disabled]), [tabindex="0"]', lb);
+      if (!f.length) return;
+      const i = f.indexOf(document.activeElement);
+      e.preventDefault();
+      f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+    }
+  });
+
+  $('#upEmail').addEventListener('input', e => { rec.email = e.target.value; validateUpEmailUI(); updateResumeEmailBtn(); persistSoon(); });
+  $('#useResumeEmail').addEventListener('click', () => {
+    rec.email = T(state.personal.email);
+    $('#upEmail').value = rec.email;
+    validateUpEmailUI(); updateResumeEmailBtn(); persist();
+    toast('Gmail address copied from your resume.', 'ok');
+  });
+
+  /* load whatever was saved last time */
+  idb.get(DB_CFG.key).then(saved => {
+    if (saved && typeof saved === 'object') Object.assign(rec, saved);
+  }).catch(() => { /* storage unavailable: the tab still works for this session */ }).then(() => {
+    $('#upEmail').value = rec.email || '';
+    validateUpEmailUI(); updateResumeEmailBtn();
+    if (rec.blob) showImage(); else showDrop();
+  });
+}
+
+/* =====================================================================
+   12. DASHBOARD INIT & BOOT
+   ===================================================================== */
+function initDashboard() {
+  if (dashReady) return;
+  dashReady = true;
+  state = loadResume();
+  buildPickers(); bindBuilder(); bindToolbar();
+  hydrateForm(); renderPreview();
+  initUpload();
+}
+
+function boot() {
+  initRipple(); initTilt(); initAuth(); initTabs();
+  const onMQ = e => { reduceMotion = e.matches; Bg.setReduced(reduceMotion); };
+  if (reduceMQ.addEventListener) reduceMQ.addEventListener('change', onMQ); else if (reduceMQ.addListener) reduceMQ.addListener(onMQ);
+  if (store.get('sessionStorage', KEY.session) === '1') enterDashboard(false);   // already signed in this session
+  else { enterLogin(); login.user.focus({ preventScroll: true }); }
+  document.documentElement.classList.remove('has-session');
+}
+boot();
+})();
+</script>
+</body>
+</html>
