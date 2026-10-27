@@ -7,8 +7,10 @@
 <meta name="theme-color" content="#05061a">
 <title>Resume Studio</title>
 <script>
-/* Avoids a flash of the login card when the page is reloaded while still signed in (this tab's session). */
+/* Picks the right first screen before paint: the studio when already signed in (this tab's session),
+   the login card for a #login link, otherwise the public resume. Avoids a flash of the wrong screen. */
 try { if (sessionStorage.getItem('resumeStudio.session') === '1') document.documentElement.classList.add('has-session'); } catch (e) { /* storage blocked */ }
+if (location.hash === '#login') document.documentElement.classList.add('want-login');
 </script>
 
 <!-- Fonts: Syne (display) + Manrope (interface) + Source Serif 4 (the "Classic" resume template). Falls back to system fonts offline. -->
@@ -34,7 +36,8 @@ try { if (sessionStorage.getItem('resumeStudio.session') === '1') document.docum
 }
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
-html.has-session #loginScreen{display:none}
+html.has-session #loginScreen,html.has-session #publicView,html.want-login #publicView{display:none!important}
+html.want-login:not(.has-session) #loginScreen[hidden]{display:grid!important}
 html{color-scheme:dark;-webkit-text-size-adjust:100%;scrollbar-color:#3b3f78 transparent}
 body{
   margin:0;min-height:100vh;color:var(--ink);font-family:var(--ff-body);font-size:16px;line-height:1.5;
@@ -161,6 +164,48 @@ select.inp option{background:#12143a;color:var(--ink)}
 .pw-toggle:hover{color:var(--cyan);background:rgba(255,255,255,.07)}
 .login-error{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:12px;background:rgba(255,107,135,.12);border:1px solid rgba(255,107,135,.5);color:#ffc2cd;font-size:.9rem;font-weight:600}
 .login-foot{margin-top:20px;font-size:.78rem;color:var(--dim);text-align:center}
+.back-link{display:inline-flex;align-items:center;gap:7px;margin:-8px 0 16px -6px;padding:6px 10px 6px 6px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:700 .84rem var(--ff-body);cursor:pointer;transition:color .2s,background .2s}
+.back-link:hover{color:var(--cyan);background:rgba(255,255,255,.06)}
+.back-link:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+/* =====================================================================
+   3b. PUBLIC RESUME PAGE (default for visitors)
+   ===================================================================== */
+.pub{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+.pub-bar{
+  position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px clamp(14px,3vw,32px);background:rgba(7,8,30,.58);border-bottom:1px solid var(--line);
+  -webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);
+}
+.lite .pub-bar{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(9,10,34,.92)}
+.pub-actions{display:flex;align-items:center;gap:10px}
+.pub-main{flex:1;display:flex;flex-direction:column;align-items:center;gap:16px;padding:clamp(18px,4vw,44px) clamp(14px,3vw,32px) 70px;outline:none;perspective:1600px}
+.pub-stage{width:min(794px,100%);perspective:1600px;transform-style:preserve-3d}
+.pub-sizer{position:relative;margin:0 auto;transform-style:preserve-3d;will-change:transform}
+.pub-sizer .rs-paper{border-radius:6px;box-shadow:0 50px 120px -30px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.06),0 0 90px -20px rgba(139,92,255,.45)}
+.pub-sizer::after{content:'';position:absolute;inset:0;border-radius:6px;pointer-events:none;background:radial-gradient(600px circle at var(--gx,50%) var(--gy,0%),rgba(255,255,255,.22),transparent 40%);opacity:var(--glare,0);transition:opacity .4s;mix-blend-mode:soft-light}
+.pub-chip{display:flex;gap:9px;align-items:flex-start;max-width:min(794px,100%);padding:10px 14px;border-radius:12px;background:rgba(255,207,92,.1);border:1px solid rgba(255,207,92,.45);color:#ffe7a8;font-size:.86rem;font-weight:600}
+.pub-chip .i{flex:none;margin-top:2px}
+.pub-empty{width:min(520px,100%);margin-top:6vh;padding:34px 28px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.pub-empty-ico{width:64px;height:64px;filter:drop-shadow(0 0 20px rgba(139,92,255,.8))}
+.pub-empty h1{font:800 clamp(1.4rem,4vw,1.8rem)/1.15 var(--ff-display);text-wrap:balance}
+.pub-empty p{color:var(--muted);max-width:40ch}
+.pub-empty .btn{margin-top:8px}
+.pub-loading{color:var(--muted);font-weight:600;margin-top:10vh}
+@media (max-width:480px){
+  .pub-bar .brand span{font-size:1rem}
+  .pub-bar .btn-txt{display:none}
+  .pub-bar #pubPdf{padding:0 11px}
+}
+@media (max-width:360px){ .pub-bar .brand span{display:none} }
+
+/* Publish dialog */
+.publish-panel{width:min(500px,100%)}
+.publish-panel code{font-size:.88em;padding:1px 6px;border-radius:6px;background:rgba(255,255,255,.08);color:#dfe3ff}
+.pb-steps{margin:14px 0 18px;padding-left:22px;display:grid;gap:7px;color:var(--muted);font-size:.92rem}
+.pb-steps strong{color:var(--ink)}
+.pb-actions{display:flex;flex-wrap:wrap;gap:10px}
+.pb-actions .btn{flex:1 1 180px}
 
 /* =====================================================================
    4. DASHBOARD SHELL, TOP BAR, SLIDING TABS
@@ -411,6 +456,7 @@ input[type=range].range{-webkit-appearance:none;appearance:none;width:100%;heigh
   .tab{flex:1;justify-content:center;padding:0 10px}
   .top-right{margin-left:auto}
   .save-status span.txt{display:none}
+  .top-right .btn-txt{display:none}
 }
 @media (max-width:640px){
   .grid2{grid-template-columns:1fr}
@@ -495,6 +541,10 @@ input[type=range].range{-webkit-appearance:none;appearance:none;width:100%;heigh
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
   <symbol id="i-swap" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+  <symbol id="i-login" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+  <symbol id="i-studio" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
   <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
 </svg>
 
@@ -504,11 +554,42 @@ input[type=range].range{-webkit-appearance:none;appearance:none;width:100%;heigh
 <div id="app">
 
   <!-- =================================================================
-       LOGIN SCREEN
+       PUBLIC RESUME (what every visitor sees — no sign-in needed)
        ================================================================= -->
-  <main id="loginScreen" class="login" aria-labelledby="loginTitle">
+  <div id="publicView" class="pub">
+    <header class="pub-bar" id="pubBar">
+      <div class="brand">
+        <svg class="logo" aria-hidden="true"><use href="#logo"/></svg>
+        <span>Resume Studio</span>
+      </div>
+      <div class="pub-actions">
+        <button type="button" class="btn btn-sm" id="pubPdf" hidden><svg class="i" aria-hidden="true"><use href="#i-printer"/></svg><span class="btn-txt">Download PDF</span></button>
+        <button type="button" class="btn btn-sm btn-primary" id="pubLogin"><svg class="i" aria-hidden="true"><use href="#i-login"/></svg><span id="pubLoginText">Log in</span></button>
+      </div>
+    </header>
+
+    <main class="pub-main" id="pubMain" tabindex="-1" aria-label="Resume">
+      <p class="pub-chip" id="pubDraft" hidden><svg class="i" aria-hidden="true"><use href="#i-info"/></svg> Showing the draft saved in this browser. Visitors won’t see it until it’s published.</p>
+      <div class="pub-stage" id="pubStage" hidden>
+        <div class="pub-sizer" id="pubSizer"><article class="rs-paper" id="pubPaper" aria-label="Resume"></article></div>
+      </div>
+      <section class="pub-empty card" id="pubEmpty" hidden aria-labelledby="pubEmptyTitle">
+        <svg class="pub-empty-ico" aria-hidden="true"><use href="#logo"/></svg>
+        <h1 id="pubEmptyTitle">No resume published yet</h1>
+        <p>The owner of this page hasn’t published a resume. If that’s you, log in to build one and publish it.</p>
+        <button type="button" class="btn btn-primary" id="pubEmptyLogin"><svg class="i" aria-hidden="true"><use href="#i-login"/></svg> Log in to build it</button>
+      </section>
+      <p class="pub-loading" id="pubLoading" role="status">Loading resume…</p>
+    </main>
+  </div>
+
+  <!-- =================================================================
+       LOGIN SCREEN (opened from the "Log in" button)
+       ================================================================= -->
+  <main id="loginScreen" class="login" aria-labelledby="loginTitle" hidden>
     <div id="loginCard" class="login-card">
       <span class="ring" aria-hidden="true"><i></i></span>
+      <button type="button" class="back-link lift" id="loginBack"><svg class="i" aria-hidden="true"><use href="#i-back"/></svg> Back to resume</button>
       <div class="brand-lg lift" data-in>
         <svg class="logo" aria-hidden="true"><use href="#logo"/></svg>
         <span>Resume Studio</span>
@@ -568,6 +649,7 @@ input[type=range].range{-webkit-appearance:none;appearance:none;width:100%;heigh
 
       <div class="top-right">
         <span class="save-status" id="saveStatus" role="status" aria-live="polite"><i class="save-dot" aria-hidden="true"></i><span class="txt" id="saveText">Autosave on</span></span>
+        <button type="button" class="btn btn-sm" id="viewSiteBtn" title="See the page visitors see"><svg class="i" aria-hidden="true"><use href="#i-globe"/></svg><span class="btn-txt">Public page</span></button>
         <button type="button" class="btn btn-sm" id="logoutBtn"><svg class="i" aria-hidden="true"><use href="#i-logout"/></svg> Log out</button>
       </div>
     </header>
@@ -593,6 +675,7 @@ input[type=range].range{-webkit-appearance:none;appearance:none;width:100%;heigh
           <span class="spacer" aria-hidden="true"></span>
           <button type="button" class="btn btn-sm" id="btnCopy"><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg> Copy text</button>
           <button type="button" class="btn btn-sm" id="btnEmail"><svg class="i" aria-hidden="true"><use href="#i-mail"/></svg> Email to my Gmail</button>
+          <button type="button" class="btn btn-sm" id="btnPublish"><svg class="i" aria-hidden="true"><use href="#i-globe"/></svg> Publish</button>
           <button type="button" class="btn btn-sm btn-primary" id="btnPdf"><svg class="i" aria-hidden="true"><use href="#i-printer"/></svg> Download as PDF</button>
         </div>
 
@@ -615,7 +698,7 @@ input[type=range].range{-webkit-appearance:none;appearance:none;width:100%;heigh
               </div>
               <div class="sec-body" id="b-personal">
                 <div class="grid2">
-                  <div class="field"><label for="f-name">Full name</label><input class="inp" id="f-name" data-p="name" maxlength="80" autocomplete="off" placeholder="Maya Lindqvist"></div>
+                  <div class="field"><label for="f-name">Full name</label><input class="inp" id="f-name" data-p="name" maxlength="80" autocomplete="off" placeholder="Alex Rivera"></div>
                   <div class="field"><label for="f-title">Job title</label><input class="inp" id="f-title" data-p="title" maxlength="80" autocomplete="off" placeholder="Senior Product Designer"></div>
                   <div class="field"><label for="f-email">Gmail address</label><input class="inp" id="f-email" data-p="email" type="email" inputmode="email" maxlength="80" autocomplete="off" placeholder="you@gmail.com" aria-describedby="m-email"><span class="msg" id="m-email" aria-live="polite"></span></div>
                   <div class="field"><label for="f-phone">Phone</label><input class="inp" id="f-phone" data-p="phone" type="tel" inputmode="tel" maxlength="24" autocomplete="off" placeholder="+1 555 010 4477" aria-describedby="m-phone"><span class="msg" id="m-phone" aria-live="polite"></span></div>
@@ -848,6 +931,25 @@ input[type=range].range{-webkit-appearance:none;appearance:none;width:100%;heigh
   </div>
 </div>
 
+<!-- ===== Publish dialog ===== -->
+<div id="publishModal" class="modal" hidden>
+  <div class="modal-panel publish-panel" role="dialog" aria-modal="true" aria-labelledby="pbTitle" aria-describedby="pbText">
+    <h2 id="pbTitle">Publish your resume</h2>
+    <p id="pbText">Visitors see the resume saved as <code>resume.json</code> next to this page. Save your current resume as that file in the same place as <code>index.html</code>.</p>
+    <ol class="pb-steps" id="pbSteps">
+      <li><strong>Copy</strong> the resume data (or download it as <code>resume.json</code>).</li>
+      <li id="pbStepGh"><strong>Open GitHub</strong>, paste it into the file editor and commit.</li>
+      <li>Reload the public page after about a minute.</li>
+    </ol>
+    <div class="pb-actions">
+      <button type="button" class="btn btn-primary" id="pbCopy"><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg> Copy resume data</button>
+      <button type="button" class="btn" id="pbDownload"><svg class="i" aria-hidden="true"><use href="#i-download"/></svg> Download resume.json</button>
+      <a class="btn" id="pbGithub" href="#" target="_blank" rel="noopener" hidden><svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg> Open GitHub editor</a>
+    </div>
+    <div class="modal-actions"><button type="button" class="btn" id="pbClose">Done</button></div>
+  </div>
+</div>
+
 <!-- ===== Toasts ===== -->
 <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 
@@ -947,7 +1049,7 @@ const store = {
    ===================================================================== */
 const gsap = window.gsap || (function makeFallback() {
   const RESERVED = new Set(['duration', 'delay', 'ease', 'stagger', 'onComplete', 'onUpdate', 'overwrite', 'clearProps', 'transformPerspective', 'repeat', 'yoyo', 'transformOrigin', 'keyframes', 'immediateRender', 'force3D', 'paused']);
-  const TF = { x: v => 'translateX(' + v + 'px)', y: v => 'translateY(' + v + 'px)', scale: v => 'scale(' + v + ')', rotation: v => 'rotate(' + v + 'deg)', rotationX: v => 'rotateX(' + v + 'deg)', rotationY: v => 'rotateY(' + v + 'deg)' };
+  const TF = { x: v => 'translateX(' + v + 'px)', y: v => 'translateY(' + v + 'px)', z: v => 'translateZ(' + v + 'px)', scale: v => 'scale(' + v + ')', rotation: v => 'rotate(' + v + 'deg)', rotationX: v => 'rotateX(' + v + 'deg)', rotationY: v => 'rotateY(' + v + 'deg)' };
   const list = t => typeof t === 'string' ? $$(t) : (t instanceof Element ? [t] : (t && typeof t.length === 'number' ? Array.from(t) : (t ? [t] : [])));
   function apply(el, vars) {
     if (!(el instanceof Element)) { for (const k in vars) if (!RESERVED.has(k)) el[k] = vars[k]; return; }
@@ -1080,7 +1182,7 @@ if (SOFTWARE_GL) document.documentElement.classList.add('lite');
 
 const Bg = (function () {
   const canvas = $('#bg3d');
-  const api = { ok: false, warp() {}, setReduced() {} };
+  const api = { ok: false, warp() {}, swing() {}, setReduced() {} };
   if (!window.THREE) { canvas.style.display = 'none'; return api; }
   const T = window.THREE;
 
@@ -1158,7 +1260,7 @@ const Bg = (function () {
   builders.slice(0, small ? 4 : builders.length).forEach(b => b());
 
   const mouse = { x: 0, y: 0, tx: 0, ty: 0 }, scrollV = { v: 0, t: 0 }, boost = { v: 0 };
-  let reduced = reduceMotion, running = false, frozen = false, raf = 0, time = 0, last = 0, accDt = 0, accN = 0;
+  let reduced = reduceMotion, running = false, frozen = false, raf = 0, time = 0, last = 0, accDt = 0, accN = 0, swing = { v: 0 };
 
   window.addEventListener('pointermove', e => { mouse.tx = (e.clientX / window.innerWidth - 0.5) * 2; mouse.ty = (e.clientY / window.innerHeight - 0.5) * 2; requestStill(); }, { passive: true });
   window.addEventListener('scroll', () => {
@@ -1186,7 +1288,7 @@ const Bg = (function () {
       scrollV.v += (scrollV.t - scrollV.v) * 0.06;
     }
     const b = 1 + boost.v * 6;
-    world.rotation.y = mouse.x * 0.18 + scrollV.v * 0.6 + time * 0.02;
+    world.rotation.y = mouse.x * 0.18 + scrollV.v * 0.6 + time * 0.02 + swing.v;
     world.rotation.x = -mouse.y * 0.1 + scrollV.v * 0.25;
     camera.position.x = mouse.x * 0.9;
     camera.position.y = -mouse.y * 0.6 - scrollV.v * 2.2;
@@ -1241,6 +1343,11 @@ const Bg = (function () {
     if (reduced) return;
     gsap.fromTo(boost, { v: 0 }, { v: 1, duration: 0.55, ease: 'power2.out', onComplete: () => gsap.to(boost, { v: 0, duration: 1.5, ease: 'power3.inOut' }) });
   };
+  /* Swings the whole 3D world around when the page changes, so screens feel like they live in one space. */
+  api.swing = function (dir) {
+    if (reduced) return;
+    gsap.to(swing, { v: swing.v + (dir || 1) * 0.9, duration: 1.6, ease: 'power3.inOut', onUpdate: requestStill });
+  };
   api.setReduced = function (flag) {
     reduced = flag;
     if (flag) { stop(); mouse.x = mouse.y = mouse.tx = mouse.ty = 0; renderOnce(); } else start();
@@ -1294,11 +1401,59 @@ function initAuth() {
     e.preventDefault();
     if (login.user.value === DEMO_USER && login.pass.value === DEMO_PASS) {
       clearLoginError();
+      clearHash();
       enterDashboard(true);
     } else loginFail();
   });
   [login.user, login.pass].forEach(i => i.addEventListener('input', clearLoginError));
   $('#logoutBtn').addEventListener('click', signOut);
+
+  /* Visitors land on the public resume; "Log in" (top right) opens the login card via #login,
+     so the browser's Back button / swipe-back returns to the resume. */
+  const openLogin = () => {
+    if (isSignedIn()) { enterDashboard(true, true); return; }
+    if (location.hash === '#login') showLogin(true); else location.hash = 'login';
+  };
+  $('#pubLogin').addEventListener('click', openLogin);
+  $('#pubEmptyLogin').addEventListener('click', openLogin);
+  $('#loginBack').addEventListener('click', () => { clearHash(); showPublic(true); });
+  $('#viewSiteBtn').addEventListener('click', () => leaveDashboard(() => showPublic(true)));
+  window.addEventListener('hashchange', () => {
+    if (isSignedIn() && !$('#dashboard').hidden) return;
+    if (location.hash === '#login') { if (login.screen.hidden) showLogin(true); }
+    else if (!login.screen.hidden) showPublic(true);
+  });
+  login.screen.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && $('#confirm').hidden) { e.preventDefault(); clearHash(); showPublic(true); }
+  });
+}
+
+const isSignedIn = () => store.get('sessionStorage', KEY.session) === '1';
+function clearHash() {
+  if (!location.hash) return;
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { location.hash = ''; }
+}
+
+/* Shows the login card; the public page tips back into depth while the card swings in. */
+function showLogin(animated) {
+  const pub = $('#publicView');
+  const reveal = () => {
+    pub.hidden = true;
+    $('#dashboard').hidden = true;
+    login.screen.hidden = false;
+    login.form.reset(); clearLoginError();
+    gsap.set(login.card, { clearProps: 'all' });
+    window.scrollTo(0, 0);
+    enterLogin(animated);
+    login.user.focus({ preventScroll: true });
+  };
+  if (!animated || reduceMotion || pub.hidden) { reveal(); return; }
+  Bg.swing(1);
+  gsap.to($('#pubMain'), { rotationY: -18, rotationX: 6, z: -260, opacity: 0, transformPerspective: 1400, transformOrigin: '50% 40%', duration: 0.5, ease: 'power3.in' });
+  gsap.to($('#pubBar'), { y: -30, opacity: 0, duration: 0.4, ease: 'power2.in', onComplete: () => {
+    gsap.set([$('#pubMain'), $('#pubBar')], { clearProps: 'transform,opacity' });
+    reveal();
+  } });
 }
 
 /* 3D tilt that follows the cursor + a moving glare */
@@ -1319,52 +1474,68 @@ function initTilt() {
   });
 }
 
-function enterLogin() {
-  gsap.fromTo(login.card, { y: 44, scale: 0.94, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: D(0.8), ease: 'power3.out', clearProps: 'transform,opacity,filter' });
-  gsap.fromTo($$('[data-in]', login.card), { y: reduceMotion ? 0 : 18, opacity: 0 }, { y: 0, opacity: 1, duration: D(0.6), stagger: reduceMotion ? 0 : 0.08, delay: reduceMotion ? 0 : 0.2, ease: 'power3.out', clearProps: 'transform,opacity' });
+/* The card flips in from the side, deep in Z, then its rows rise in one after another. */
+function enterLogin(flip) {
+  const deep = flip && !reduceMotion;
+  gsap.fromTo(login.card,
+    deep ? { rotationY: 38, rotationX: -6, z: -320, x: 60, opacity: 0, transformPerspective: 1200 } : { y: 44, scale: 0.94, opacity: 0 },
+    { rotationY: 0, rotationX: 0, z: 0, x: 0, y: 0, scale: 1, opacity: 1, duration: D(deep ? 0.9 : 0.8), ease: deep ? 'expo.out' : 'power3.out', clearProps: 'transform,opacity,filter' });
+  gsap.fromTo($$('[data-in], .back-link', login.card), { y: reduceMotion ? 0 : 18, rotationX: reduceMotion ? 0 : -35, opacity: 0, transformPerspective: 700, transformOrigin: '50% 0%' },
+    { y: 0, rotationX: 0, opacity: 1, duration: D(0.5), stagger: reduceMotion ? 0 : 0.05, delay: reduceMotion ? 0 : 0.15, ease: 'power3.out', clearProps: 'transform,opacity' });
 }
 
-function enterDashboard(animated) {
+function resetLoginForm() {
+  login.form.reset(); clearLoginError();
+  login.pass.type = 'password';
+  $('#togglePass').setAttribute('aria-pressed', 'false');
+  $('#togglePass').setAttribute('aria-label', 'Show password');
+  $('#togglePassIcon').setAttribute('href', '#i-eye');
+}
+
+/* fromPublic: an already signed-in owner returning from the public page (no login card involved). */
+function enterDashboard(animated, fromPublic) {
   store.set('sessionStorage', KEY.session, '1');
   const dash = $('#dashboard');
   const reveal = () => {
     login.screen.hidden = true;
+    $('#publicView').hidden = true;
+    gsap.set([login.card, $('#pubMain'), $('#pubBar')], { clearProps: 'all' });
     dash.hidden = false;
     initDashboard();
     setTab(store.get('sessionStorage', KEY.tab) || 'builder', { instant: true });
-    gsap.fromTo('#topbar', { y: -44, opacity: 0 }, { y: 0, opacity: 1, duration: D(0.6), ease: 'power3.out', clearProps: 'transform,opacity' });
+    gsap.fromTo('#topbar', { y: -44, rotationX: reduceMotion ? 0 : -50, opacity: 0, transformPerspective: 800, transformOrigin: '50% 0%' },
+      { y: 0, rotationX: 0, opacity: 1, duration: D(0.7), ease: 'power3.out', clearProps: 'transform,opacity' });
     enterView(VIEWS[currentTab]);
     window.scrollTo(0, 0);
     $('#main').focus({ preventScroll: true });
   };
   if (!animated || reduceMotion) { reveal(); return; }
   Bg.warp();
+  if (fromPublic && !$('#publicView').hidden) {
+    gsap.to($('#pubMain'), { rotationY: 20, z: -300, opacity: 0, transformPerspective: 1400, duration: 0.5, ease: 'power3.in' });
+    gsap.to($('#pubBar'), { y: -30, opacity: 0, duration: 0.4, ease: 'power2.in', onComplete: reveal });
+    return;
+  }
+  /* the card tips backwards and falls away into the scene as the warp kicks in */
   gsap.timeline()
-    .to(login.card, { scale: 0.9, y: -26, opacity: 0, filter: 'blur(10px)', duration: 0.55, ease: 'power2.in' })
+    .to(login.card, { rotationX: 62, z: -520, y: -40, opacity: 0, transformPerspective: 1100, transformOrigin: '50% 100%', duration: 0.6, ease: 'power3.in' })
     .add(reveal);
+}
+
+/* Fades the studio out in depth, then runs next(). */
+function leaveDashboard(next) {
+  closeLightbox();
+  const dash = $('#dashboard');
+  const done = () => { dash.hidden = true; gsap.set(dash, { clearProps: 'opacity,transform' }); window.scrollTo(0, 0); next(); };
+  if (reduceMotion) { done(); return; }
+  gsap.to(dash, { opacity: 0, z: -220, rotationX: 8, transformPerspective: 1400, transformOrigin: '50% 0%', duration: D(0.45), ease: 'power2.in', onComplete: done });
 }
 
 function signOut() {
   store.del('sessionStorage', KEY.session);
-  closeLightbox();
-  const dash = $('#dashboard');
-  gsap.to(dash, {
-    opacity: 0, y: -18, duration: D(0.4), ease: 'power2.in',
-    onComplete: () => {
-      dash.hidden = true;
-      gsap.set(dash, { clearProps: 'opacity,transform' });
-      login.screen.hidden = false;
-      login.form.reset(); clearLoginError();
-      login.pass.type = 'password';
-      $('#togglePass').setAttribute('aria-pressed', 'false');
-      $('#togglePass').setAttribute('aria-label', 'Show password');
-      $('#togglePassIcon').setAttribute('href', '#i-eye');
-      gsap.set(login.card, { clearProps: 'all' });
-      window.scrollTo(0, 0);
-      enterLogin();
-      login.user.focus({ preventScroll: true });
-    }
-  });
+  resetLoginForm();
+  clearHash();
+  leaveDashboard(() => showPublic(true));
 }
 
 /* =====================================================================
@@ -1373,10 +1544,12 @@ function signOut() {
 const VIEWS = { builder: $('#viewBuilder'), upload: $('#viewUpload') };
 let currentTab = 'builder', switching = false, pendingTab = null;
 
+/* Sections rise out of the page and unfold from a tilted-back angle, one after another. */
 function enterView(view) {
   const items = $$('[data-in]', view);
-  gsap.fromTo(items, { y: reduceMotion ? 0 : 28, opacity: 0 },
-    { y: 0, opacity: 1, duration: D(0.7), stagger: reduceMotion ? 0 : 0.07, ease: 'power3.out', clearProps: 'transform,opacity' });
+  if (reduceMotion) { gsap.set(items, { opacity: 1, clearProps: 'transform,opacity' }); return; }
+  gsap.fromTo(items, { y: 40, z: -120, rotationX: -24, opacity: 0, transformPerspective: 1000, transformOrigin: '50% 0%' },
+    { y: 0, z: 0, rotationX: 0, opacity: 1, duration: D(0.85), stagger: 0.08, ease: 'expo.out', clearProps: 'transform,opacity' });
 }
 
 function positionIndicator(instant) {
@@ -1403,8 +1576,12 @@ function setTab(name, opts) {
     return;
   }
   switching = true;
+  /* views sit on a turning cube: the old one swings away to the side you're leaving */
+  const dir = Object.keys(VIEWS).indexOf(name) > Object.keys(VIEWS).indexOf(prev) ? 1 : -1;
+  Bg.swing(dir * 0.5);
   gsap.to(fromEl, {
-    opacity: 0, y: -14, duration: D(0.22), ease: 'power2.in',
+    opacity: 0, rotationY: -dir * 22, x: -dir * 60, z: -180, transformPerspective: 1400, transformOrigin: (dir > 0 ? '0%' : '100%') + ' 30%',
+    duration: D(0.32), ease: 'power2.in',
     onComplete: () => {
       fromEl.hidden = true;
       gsap.set(fromEl, { clearProps: 'opacity,transform' });
@@ -1447,7 +1624,7 @@ const defaultResume = () => ({
 
 const SAMPLE = {
   theme: 'aurora', accent: ACCENTS[0].hex,
-  personal: { name: 'Maya Lindqvist', title: 'Senior Product Designer', email: 'maya.lindqvist.demo@gmail.com', phone: '+1 555 010 4477', location: 'Berlin, Germany', linkedin: 'linkedin.com/in/maya-lindqvist', portfolio: 'mayalindqvist.design' },
+  personal: { name: 'Alex Rivera', title: 'Senior Product Designer', email: 'alex.rivera.demo@gmail.com', phone: '+1 555 010 4477', location: 'Berlin, Germany', linkedin: 'linkedin.com/in/alex-rivera', portfolio: 'alexrivera.design' },
   summary: 'Product designer with 8+ years shaping calm, data-heavy tools into products people love. I lead small cross-functional squads, run research that changes roadmaps, and ship design systems that engineers actually enjoy using.',
   experience: [
     { role: 'Senior Product Designer', company: 'Northwind Labs', start: 'Mar 2021', end: '', current: true, bullets: 'Led the redesign of the analytics workspace used by 40,000 teams\nCut onboarding time by 38% with a guided setup flow\nBuilt a 120-component design system adopted by 6 squads' },
@@ -1463,7 +1640,7 @@ const SAMPLE = {
   ],
   languages: [{ name: 'Swedish', level: 'Native' }, { name: 'English', level: 'Fluent' }, { name: 'German', level: 'Intermediate' }],
   projects: [
-    { name: 'Open-source icon set', link: 'github.com/maya/lineicons', description: '1,200 icons used by 15k developers; maintained since 2019.' }
+    { name: 'Open-source icon set', link: 'github.com/alexrivera/lineicons', description: '1,200 icons used by 15k developers; maintained since 2019.' }
   ],
   certifications: [
     { name: 'NN/g UX Certification', issuer: 'Nielsen Norman Group', year: '2020' }
@@ -1977,17 +2154,22 @@ function fitPaper() {
 }
 
 /* ---------- print / PDF ---------- */
+/* Which resume to print: the one being edited, or the published one on the public page. */
+let printOverride = null;
+const printSource = () => printOverride || (!$('#publicView').hidden && Pub.data ? Pub.data : state);
 function buildPrintSheet() {
+  const r = printSource();
   $('#printSheet').innerHTML = '<table class="print-table"><thead><tr><td class="pg-sp"></td></tr></thead><tbody><tr><td>' +
-    '<article class="rs-paper t-' + state.theme + '" style="--ra:' + state.accent + '">' + resumeHTML(state, { links: true }) + '</article>' +
+    '<article class="rs-paper t-' + r.theme + '" style="--ra:' + r.accent + '">' + resumeHTML(r, { links: true }) + '</article>' +
     '</td></tr></tbody><tfoot><tr><td class="pg-sp"></td></tr></tfoot></table>';
 }
 const baseTitle = document.title;
 window.addEventListener('beforeprint', () => {                  // also covers Ctrl/Cmd+P
   buildPrintSheet();
-  document.title = 'Resume' + (T(state.personal.name) ? ' – ' + T(state.personal.name) : '');
+  const n = T(printSource().personal.name);
+  document.title = 'Resume' + (n ? ' – ' + n : '');
 });
-window.addEventListener('afterprint', () => { document.title = baseTitle; $('#printSheet').innerHTML = ''; });
+window.addEventListener('afterprint', () => { document.title = baseTitle; $('#printSheet').innerHTML = ''; printOverride = null; });
 
 function printResume() {
   if (!hasContent(state)) { toast('Your resume is empty — add some details first.', 'warn'); return; }
@@ -2076,8 +2258,61 @@ async function importJSON(file) {
   toast('Resume imported from ' + file.name, 'ok');
 }
 
+/* ---------- Publish: the public page shows resume.json, which lives next to index.html ---------- */
+function publishPayload() {
+  return JSON.stringify({ app: 'resume-studio', version: 1, exportedAt: new Date().toISOString(), resume: state }, null, 2);
+}
+/* On GitHub Pages (owner.github.io/repo/) we can link straight to GitHub's file editor for resume.json. */
+function githubEditorUrl() {
+  const m = location.hostname.match(/^([a-z0-9-]+)\.github\.io$/i);
+  if (!m) return '';
+  const seg = location.pathname.split('/').filter(Boolean);
+  const repo = seg.length && !/\.html?$/i.test(seg[0]) ? seg[0] : m[1] + '.github.io';
+  const exists = Pub.source === 'published';
+  return 'https://github.com/' + m[1] + '/' + repo + (exists ? '/edit/main/resume.json' : '/new/main?filename=resume.json');
+}
+function openPublish() {
+  if (!hasContent(state)) { toast('Your resume is empty — add some details before publishing.', 'warn'); return; }
+  const m = $('#publishModal'), prev = document.activeElement, gh = githubEditorUrl();
+  $('#pbGithub').hidden = !gh; $('#pbStepGh').hidden = !gh;
+  if (gh) $('#pbGithub').href = gh;
+  m.hidden = false;
+  gsap.fromTo(m, { opacity: 0 }, { opacity: 1, duration: D(0.2) });
+  gsap.fromTo($('.modal-panel', m), { rotationX: reduceMotion ? 0 : -28, y: 30, z: -120, opacity: 0, transformPerspective: 900, transformOrigin: '50% 0%' },
+    { rotationX: 0, y: 0, z: 0, opacity: 1, duration: D(0.5), ease: 'back.out(1.4)', clearProps: 'transform,opacity' });
+  $('#pbCopy').focus();
+  const close = () => {
+    m.hidden = true; document.removeEventListener('keydown', onKey, true); m.removeEventListener('click', onBack);
+    if (prev && prev.focus) prev.focus();
+  };
+  const onKey = e => {
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === 'Tab') {
+      const f = $$('button:not([hidden]), a:not([hidden])', m), i = f.indexOf(document.activeElement);
+      e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+    }
+  };
+  const onBack = e => { if (e.target === m) close(); };
+  document.addEventListener('keydown', onKey, true);
+  m.addEventListener('click', onBack);
+  $('#pbClose').onclick = close;
+}
+async function copyPublish() {
+  const txt = publishPayload();
+  try { await navigator.clipboard.writeText(txt); toast('Resume data copied. Paste it into resume.json and commit.', 'ok'); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = txt; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (er) { /* ignore */ }
+    ta.remove();
+    toast(ok ? 'Resume data copied. Paste it into resume.json and commit.' : 'Copy was blocked — use “Download resume.json” instead.', ok ? 'ok' : 'error');
+  }
+}
+
 function bindToolbar() {
   $('#btnPdf').addEventListener('click', printResume);
+  $('#btnPublish').addEventListener('click', openPublish);
+  $('#pbCopy').addEventListener('click', copyPublish);
+  $('#pbDownload').addEventListener('click', () => { downloadBlob(new Blob([publishPayload()], { type: 'application/json' }), 'resume.json'); toast('Downloaded resume.json', 'ok'); });
   $('#btnEmail').addEventListener('click', emailResume);
   $('#btnCopy').addEventListener('click', copyText);
   $('#btnExport').addEventListener('click', exportJSON);
@@ -2495,13 +2730,129 @@ function initDashboard() {
   initUpload();
 }
 
+/* =====================================================================
+   13. PUBLIC RESUME PAGE — what visitors see without signing in
+   ===================================================================== */
+/* The published resume is resume.json next to this page (the owner creates it with "Publish").
+   If there is none (or the page was opened as a local file), the draft saved in this browser is
+   shown instead, with a note, so the owner can preview it; other visitors just see an empty state. */
+const Pub = { data: null, source: '', loaded: false, loading: null };
+
+async function loadPublished() {
+  if (location.protocol !== 'file:') {
+    try {
+      const res = await fetch('resume.json', { cache: 'no-cache' });
+      if (res.ok) {
+        const j = await res.json();
+        const r = normalizeResume(j && typeof j === 'object' && j.resume ? j.resume : j);
+        if (hasContent(r)) return { data: r, source: 'published' };
+      }
+    } catch (e) { /* not published (404) or invalid JSON → fall through */ }
+  }
+  const raw = store.get('localStorage', KEY.resume);
+  if (raw) {
+    try { const r = normalizeResume(JSON.parse(raw)); if (hasContent(r)) return { data: r, source: 'draft' }; } catch (e) { /* ignore */ }
+  }
+  return { data: null, source: 'none' };
+}
+
+function fitPublic() {
+  const stage = $('#pubStage'), sizer = $('#pubSizer'), paper = $('#pubPaper');
+  if (stage.hidden || !stage.clientWidth) return;
+  const s = Math.min(1, stage.clientWidth / 794);
+  paper.style.transform = 'scale(' + s + ')';
+  sizer.style.width = Math.round(794 * s) + 'px';
+  sizer.style.height = Math.round(paper.offsetHeight * s) + 'px';
+}
+
+function renderPublic(animated) {
+  const has = !!Pub.data;
+  $('#pubLoading').hidden = true;
+  $('#pubStage').hidden = !has;
+  $('#pubEmpty').hidden = has;
+  $('#pubPdf').hidden = !has;
+  $('#pubDraft').hidden = Pub.source !== 'draft';
+  if (!has) {
+    if (animated && !reduceMotion) gsap.fromTo('#pubEmpty', { rotationX: -40, z: -200, y: 40, opacity: 0, transformPerspective: 1000 },
+      { rotationX: 0, z: 0, y: 0, opacity: 1, duration: 0.9, ease: 'expo.out', clearProps: 'transform,opacity' });
+    return;
+  }
+  const r = Pub.data, paper = $('#pubPaper');
+  paper.className = 'rs-paper t-' + r.theme;
+  paper.style.setProperty('--ra', r.accent);
+  paper.innerHTML = resumeHTML(r, { links: true });
+  fitPublic();
+  if (!animated || reduceMotion) return;
+  /* the page drifts up out of the scene, unfolding from a steep angle, then its sections settle in */
+  const bars = $$('.bar b', paper);
+  bars.forEach(b => { b.style.transition = 'none'; b.style.width = '0%'; });
+  gsap.fromTo('#pubSizer', { rotationX: 48, rotationY: -14, z: -420, y: 120, opacity: 0, transformPerspective: 1600, transformOrigin: '50% 100%' },
+    { rotationX: 0, rotationY: 0, z: 0, y: 0, opacity: 1, duration: 1.3, ease: 'expo.out', clearProps: 'transform,opacity' });
+  gsap.fromTo($$('.rs-head, .rs-sec', paper), { y: 26, rotationX: -40, opacity: 0, transformPerspective: 900, transformOrigin: '50% 0%' },
+    { y: 0, rotationX: 0, opacity: 1, duration: 0.8, stagger: 0.07, delay: 0.35, ease: 'power3.out', clearProps: 'transform,opacity' });
+  setTimeout(() => bars.forEach(b => { b.style.transition = ''; b.style.width = b.dataset.v + '%'; }), 900);
+}
+
+/* The page leans toward the pointer with a soft glare, like a sheet held up to the light. */
+function tiltOnPointer(area, sheet, maxY, maxX) {
+  area.addEventListener('pointermove', e => {
+    if (reduceMotion || e.pointerType === 'touch' || !sheet.offsetWidth) return;
+    const r = sheet.getBoundingClientRect();
+    const nx = clamp((e.clientX - r.left) / r.width, 0, 1) - 0.5, ny = clamp((e.clientY - r.top) / Math.min(r.height, window.innerHeight), 0, 1) - 0.5;
+    gsap.to(sheet, { rotationY: nx * maxY, rotationX: -ny * maxX, transformPerspective: 1800, duration: 0.6, ease: 'power2.out', overwrite: 'auto' });
+    sheet.style.setProperty('--gx', ((e.clientX - r.left) / r.width * 100) + '%');
+    sheet.style.setProperty('--gy', ((e.clientY - r.top) / r.height * 100) + '%');
+    sheet.style.setProperty('--glare', '1');
+  });
+  area.addEventListener('pointerleave', () => {
+    gsap.to(sheet, { rotationY: 0, rotationX: 0, duration: 0.9, ease: 'power3.out', overwrite: 'auto' });
+    sheet.style.setProperty('--glare', '0');
+  });
+}
+function initPublicTilt() {
+  tiltOnPointer($('#pubMain'), $('#pubSizer'), 7, 5);
+  tiltOnPointer($('#paperViewport'), $('#paperSizer'), 4, 3);      // the studio's live preview leans a little too
+  window.addEventListener('resize', debounce(fitPublic, 120));
+}
+
+function showPublic(animated) {
+  const pub = $('#publicView');
+  login.screen.hidden = true;
+  $('#dashboard').hidden = true;
+  pub.hidden = false;
+  gsap.set([login.card, $('#pubMain'), $('#pubBar')], { clearProps: 'all' });
+  $('#pubLoginText').textContent = isSignedIn() ? 'Open studio' : 'Log in';
+  $('#pubLogin').firstElementChild.firstElementChild.setAttribute('href', isSignedIn() ? '#i-studio' : '#i-login');
+  window.scrollTo(0, 0);
+  if (animated && !reduceMotion) {
+    Bg.swing(-1);
+    gsap.fromTo('#pubBar', { y: -40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'power3.out', clearProps: 'transform,opacity' });
+  }
+  /* reload every time so a fresh publish or a draft edit shows up */
+  $('#pubLoading').hidden = !!Pub.loaded;
+  const job = Pub.loading = loadPublished().then(res => {
+    if (job !== Pub.loading) return;
+    Pub.data = res.data; Pub.source = res.source; Pub.loaded = true; Pub.loading = null;
+    renderPublic(animated);
+  });
+}
+
+function printPublic() {
+  if (!Pub.data) return;
+  printOverride = Pub.data;
+  toast('In the print dialog choose “Save as PDF” as the destination.', 'info', 5000);
+  setTimeout(() => window.print(), 250);
+}
+
 function boot() {
-  initRipple(); initTilt(); initAuth(); initTabs();
+  initRipple(); initTilt(); initAuth(); initTabs(); initPublicTilt();
+  $('#pubPdf').addEventListener('click', printPublic);
   const onMQ = e => { reduceMotion = e.matches; Bg.setReduced(reduceMotion); };
   if (reduceMQ.addEventListener) reduceMQ.addEventListener('change', onMQ); else if (reduceMQ.addListener) reduceMQ.addListener(onMQ);
-  if (store.get('sessionStorage', KEY.session) === '1') enterDashboard(false);   // already signed in this session
-  else { enterLogin(); login.user.focus({ preventScroll: true }); }
-  document.documentElement.classList.remove('has-session');
+  if (isSignedIn()) enterDashboard(false);                       // already signed in this session
+  else if (location.hash === '#login') showLogin(false);         // a direct link to the login card
+  else showPublic(true);                                        // everyone else: the public resume
+  document.documentElement.classList.remove('has-session', 'want-login');
 }
 boot();
 })();
